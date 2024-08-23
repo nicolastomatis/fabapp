@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AntDesign from '@expo/vector-icons/AntDesign';
+import axios from 'axios'; // Asegúrate de tener axios instalado
 
 const NotificacionesScreen = ({ navigation }) => {
   const [novedades, setNovedades] = useState([]);
@@ -34,19 +35,18 @@ const NotificacionesScreen = ({ navigation }) => {
           throw new Error('Datos de sesión incompletos');
         }
 
-        const res = await fetch('http://10.10.0.49:3000/TraerNovedades', {
-          method: 'POST',
+        // Construir los datos en formato application/x-www-form-urlencoded
+        const formData = new URLSearchParams();
+        formData.append('token', token);
+        formData.append('user', usuario.cod);
+
+        const response = await axios.post('http://www.fabawsmobile.faba.org.ar/Service1.asmx/TraerNovedades', formData.toString(), {
           headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ token, user: usuario.cod })
+            'Content-Type': 'application/x-www-form-urlencoded'
+          }
         });
 
-        if (!res.ok) {
-          throw new Error(`Error en la respuesta del servidor: ${res.statusText}`);
-        }
-
-        const data = await res.json();
+        const data = response.data;
         console.log('Datos obtenidos:', data);
 
         if (data.response && Array.isArray(data.response)) {

@@ -1,0 +1,149 @@
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
+import moment from 'moment';
+import holidays from '../feriados/feriados.json'; // Asegúrate de que la ruta sea correcta
+
+moment.updateLocale('es', {
+  week: {
+    dow: 0, // El primer día de la semana es domingo
+  },
+});
+
+// Configuración de los nombres de los días de la semana
+const dayNames = ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá'];
+
+// Generar un rango de fechas para el mes actual
+const generateDays = (date) => {
+  const startOfMonth = moment(date).startOf('month').startOf('week');
+  const endOfMonth = moment(date).endOf('month').endOf('week');
+  const days = [];
+  for (let day = startOfMonth; day <= endOfMonth; day.add(1, 'day')) {
+    days.push(day.clone());
+  }
+  return days;
+};
+
+const Calendar = ({ date, onDayPress, markedDates }) => {
+  const [currentMonth, setCurrentMonth] = useState(moment(date));
+  const days = generateDays(currentMonth);
+
+  const holidaysMap = new Map(holidays.map(holiday => [holiday.date, holiday.name]));
+
+  const renderDay = ({ item }) => {
+    const formattedDate = item.format('YYYY-MM-DD');
+    const isMarked = markedDates.includes(formattedDate);
+    const isHoliday = holidaysMap.has(formattedDate);
+    const isCurrentMonth = item.month() === currentMonth.month();
+
+    return (
+      <TouchableOpacity
+        style={[
+          styles.day,
+          !isCurrentMonth,
+          isMarked && styles.markedDay,
+          isHoliday && styles.holidayDay
+        ]}
+        onPress={() => onDayPress(item)}
+      >
+        <Text style={[
+          styles.dayText,
+          !isCurrentMonth && styles.outsideMonthText,
+          isMarked && !isHoliday && styles.markedDayText,
+          isHoliday && styles.holidayDayText
+        ]}>
+          {item.date()}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
+
+  const renderHeader = () => {
+    return (
+      <View style={styles.header}>
+        {dayNames.map((dayName, index) => (
+          <View key={index} style={styles.dayNameContainer}>
+            <Text style={styles.dayNameText}>{dayName}</Text>
+          </View>
+        ))}
+      </View>
+    );
+  };
+
+  return (
+    <View style={styles.container}>
+      <View style={[styles.header, styles.lineaAzul]}>
+        <Text style={styles.monthText}>{currentMonth.format('MMMM YYYY').toUpperCase()}</Text>
+      </View>
+      {renderHeader()}
+      <FlatList
+        data={days}
+        renderItem={renderDay}
+        keyExtractor={(item) => item.format('YYYY-MM-DD')}
+        numColumns={7}
+      />
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F1F1F1',
+    padding: 10,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  monthText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#EC7324',
+  },
+  day: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 40,
+    margin: 2,
+  },
+  markedDay: {
+    backgroundColor: '#FF893E',
+    borderRadius: 25,
+    padding: 5,
+  },
+  holidayDay: {
+    backgroundColor: 'grey', // Color para los días feriados
+  },
+  dayText: {
+    color: 'grey',
+  },
+  dayNameContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    margin: 2,
+  },
+  lineaAzul: {
+    paddingBottom: 10,
+    borderBottomWidth: 2,
+    borderColor: '#0671B8',
+  },
+  dayNameText: {
+    fontWeight: 'bold',
+    color: '#0671B8',
+  },
+  outsideMonthText: {
+    color: '#B0B0B0', // Gris claro para el texto de los días fuera del mes actual
+  },
+  markedDayText: {
+    color: 'white', // Color del texto para los días marcados
+  },
+  holidayDayText: {
+    color: 'white', // Color del texto para los días feriados
+  },
+});
+
+export default Calendar;

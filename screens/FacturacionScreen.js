@@ -1,45 +1,44 @@
-// FacturacionScreen.js
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, Text, SafeAreaView } from 'react-native';
-import { Calendar } from 'react-native-calendars';
+import Calendar from '../assets/feriados/Calendar'; // Ajusta la ruta según la estructura de tu proyecto
 import moment from 'moment';
-import 'moment/locale/es'; // Importa el locale en español
+import 'moment/locale/es'; // Importar localización en español
 import Entypo from '@expo/vector-icons/Entypo';
+
+// Importar el archivo JSON de feriados
+const feriados = require('../assets/feriados/feriados.json'); // Ajusta la ruta según la estructura de tu proyecto
+
+// Función para obtener el último día del mes
+const getLastDayOfMonth = (date) => {
+  const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+  return moment(lastDay).format('YYYY-MM-DD');
+};
 
 export default function FacturacionScreen() {
   moment.locale('es'); // Configura moment para usar español
 
-  const markedDates = {
-    '2024-08-09': {
-      selected: true,
-      marked: false,
-      selectedColor: '#00A8A2',
-      selectedTextColor: 'white',
-    },
-    '2024-08-16': {
-      selected: true,
-      marked: false,
-      selectedColor: '#00A8A2',
-      selectedTextColor: 'white',
-    },
-    '2024-08-23': {
-      selected: true,
-      marked: false,
-      selectedColor: '#00A8A2',
-      selectedTextColor: 'white',
-    },
-    '2024-08-30': {
-      selected: true,
-      marked: false,
-      selectedColor: '#00A8A2',
-      selectedTextColor: 'white',
-    },
-    '2024-08-17': {
-      selected: true,
-      marked: false,
-      selectedColor: 'grey',
-      selectedTextColor: 'white',
-    },
+  const [markedDates, setMarkedDates] = useState([]);
+  const [selectedDate, setSelectedDate] = useState(null);
+
+  useEffect(() => {
+    const markedDates = [];
+
+    // Procesar los feriados
+    feriados.forEach(feriado => {
+      const date = moment(feriado.date).format('YYYY-MM-DD');
+      markedDates.push(date);
+    });
+
+    // Agregar el último día del mes
+    const today = new Date();
+    const lastDayOfMonth = getLastDayOfMonth(today);
+    markedDates.push(lastDayOfMonth);
+
+    setMarkedDates(markedDates);
+  }, []);
+
+  const handleDayPress = (date) => {
+    setSelectedDate(date.format('YYYY-MM-DD')); // Formatear la fecha
   };
 
   return (
@@ -47,47 +46,28 @@ export default function FacturacionScreen() {
       <View style={styles.container}>
         <View style={styles.calendarContainer}>
           <Calendar
-            current={new Date().toISOString().split('T')[0]}
-            minDate={new Date().toISOString().split('T')[0]}
-            maxDate={new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().split('T')[0]}
-            hideExtraDays={true}
-            firstDay={0}
-            disableMonthChange={false}
+            date={new Date()}
+            onDayPress={handleDayPress}
             markedDates={markedDates}
-            theme={{
-              calendarBackground: '#F1F1F1',
-              textSectionTitleColor: '#EC7324',
-              selectedDayBackgroundColor: '#0671B8',
-              selectedDayTextColor: '#fff',
-              todayTextColor: '#0671B8',
-              dayTextColor: '#7E7E7E',
-              monthTextColor: '#EC7324',
-              arrowColor: '#EC7324',
-            // Cambia el tamaño del texto
-            textDayFontSize: 16, // Tamaño del texto de los días
-            textMonthFontSize: 24, // Tamaño del texto del mes
-            textDayHeaderFontSize: 16, // Tamaño del texto de los encabezados de los días
-          }}
           />
         </View>
         <View style={styles.referencia}>
-        <View style={styles.item}>
-          <Text style={styles.diaDePago}>Día de pago</Text>
-          <Entypo name="controller-record" size={40} color="#00A8A2" />
+          <View style={styles.item}>
+            <Text style={styles.fechalimite}>Fechas límite:</Text>
+            <Entypo name="controller-record" size={40} color="#FF893E" />
+          </View>
+          <View style={styles.item}>
+            <Text style={styles.feriado}>Feriado</Text>
+            <Entypo name="controller-record" size={40} color="grey" />
+          </View>
         </View>
-        <View style={styles.item}>
-          <Text style={styles.feriado}>Feriado</Text>
-          <Entypo name="controller-record" size={40} color="grey" />
-        </View>
-      </View>
         <View style={styles.referencia}>
-        <View style={styles.item}>
-          <Text style={styles.texto}>Última facturación:</Text>
+          <View style={styles.descripcion}>
+            <Text style={styles.texto}>Les recordamos las fechas límite para:</Text>
+            <Text style={styles.informacionTexto}>- Enviar a través de AOL las transacciones para facturar PAMI.</Text>
+            <Text style={styles.informacionTexto}>- Suspender órdenes de IOMA pacientes NO atendidos.</Text>
+          </View>
         </View>
-        <View style={styles.item}>
-          <Text style={styles.diaPagado}>09/07/2024</Text>
-        </View>
-      </View>
       </View>
     </SafeAreaView>
   );
@@ -101,6 +81,7 @@ const styles = StyleSheet.create({
   },
   container: {
     width: '100%',
+    height:400,
     backgroundColor: '#fff',
     padding: 20,
   },
@@ -110,24 +91,29 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 20,
     width: '100%',
+    height:'100%',
   },
   referencia: {
-    marginTop:20,
+    marginTop: 20,
     backgroundColor: '#F1F1F1',
-    padding:20,
-    borderRadius:20,
+    padding: 20,
+    borderRadius: 20,
     flexDirection: 'row',
-    justifyContent: 'space-between', 
-    alignItems: 'center', 
-    width: '100%', 
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
   },
   item: {
     flexDirection: 'row',
-    alignItems: 'center', 
+    alignItems: 'center',
   },
-  diaDePago: {
+  descripcion: {
+    flexDirection: 'column',
+    alignItems: 'start',
+  },
+  fechalimite: {
     fontWeight: 'bold',
-    color: '#00A8A2',
+    color: '#FF893E',
     fontSize: 16,
   },
   feriado: {
@@ -138,11 +124,13 @@ const styles = StyleSheet.create({
   texto: {
     fontWeight: 'bold',
     color: 'grey',
-    fontSize: 16,
+    fontSize: 18,
+    textAlign:'justify',
   },
-  diaPagado: {
-    fontWeight: 'bold',
-    color: '#FF893E',
+  informacionTexto: {
+    color: 'grey',
     fontSize: 16,
+    marginTop:10,
+    textAlign:'justify',
   },
 });

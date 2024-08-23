@@ -1,0 +1,12 @@
+[
+    { "date": "2024-01-01", "name": "Año Nuevo" },
+    { "date": "2024-02-12", "name": "Carnaval" },
+    { "date": "2024-03-24", "name": "Día de la Memoria" },
+    { "date": "2024-04-01", "name": "Semana Santa" },
+    { "date": "2024-05-01", "name": "Día del Trabajador" },
+    { "date": "2024-07-09", "name": "Día de la Independencia" },
+    { "date": "2024-08-17", "name": "Paso a la Inmortalidad del Gral. José de San Martín" },
+    { "date": "2024-10-12", "name": "Día del Respeto a la Diversidad Cultural" },
+    { "date": "2024-12-25", "name": "Navidad" }
+  ]
+  

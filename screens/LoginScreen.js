@@ -1,50 +1,53 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground, Dimensions, Image, Linking, Alert, KeyboardAvoidingView, Platform, Keyboard,
-  TouchableWithoutFeedback } from 'react-native';
-import { useNavigation } from '@react-navigation/native'; // Asegúrate de tener react-navigation
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground, Dimensions, Image, Linking, Alert, KeyboardAvoidingView, Platform, Keyboard, TouchableWithoutFeedback } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
 
 const LoginScreen = () => {
   const [user, setUser] = useState('');
   const [password, setPassword] = useState('');
-  const navigation = useNavigation(); // Obtén la función de navegación
+  const navigation = useNavigation();
   const [loginFailed, setLoginFailed] = useState(false);
-
 
   const handleLogin = async () => {
     try {
-      const res = await fetch('http://10.10.0.49:3000/IniciarSesion', {
+      // Formatear los datos como una cadena de consulta
+      const formData = new URLSearchParams();
+      formData.append('user', user);
+      formData.append('password', password);
+
+      // Realizar la solicitud POST con el formato adecuado
+      const res = await fetch('http://www.fabawsmobile.faba.org.ar/Service1.asmx/IniciarSesion', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/x-www-form-urlencoded'
         },
-        body: JSON.stringify({ user, password })
+        body: formData.toString() // Enviar los datos en el formato adecuado
       });
-  
+
       if (!res.ok) {
         throw new Error('Network response was not ok');
       }
-  
-      const data = await res.json(); // Recibimos la respuesta como JSON
-      console.log('Respuesta del servidor proxy:', data);
-  
+
+      const data = await res.json(); // Recibir la respuesta como JSON
+      console.log('Respuesta del servidor:', data);
+
       if (data.response.usuario.valido === 'SI') {
         // Guardar los datos en AsyncStorage
         await AsyncStorage.setItem('@session_data', JSON.stringify(data.response));
-  
+
         // Navegar a la pantalla principal
-        navigation.navigate('Main'); // Ajusta el nombre de la pantalla según tu configuración
-        setLoginFailed(false); // Resetea el estado de error
+        navigation.navigate('Main');
+        setLoginFailed(false);
       } else {
         // Mostrar alerta de usuario o contraseña inválidos
         Alert.alert('Error', 'Usuario o contraseña inválidos');
-        setLoginFailed(true); // Establece que el login falló
+        setLoginFailed(true);
       }
     } catch (error) {
       console.error('Fetch Error:', error);
       Alert.alert('Error', 'Error al comunicarse con el servidor');
-      setLoginFailed(true); // Establece que el login falló
+      setLoginFailed(true);
     }
   };
 
@@ -64,11 +67,9 @@ const LoginScreen = () => {
     Linking.openURL(mailtoUrl);
   };
 
-  
   const handleDismissKeyboard = () => {
-    Keyboard.dismiss(); // Minimiza el teclado
+    Keyboard.dismiss();
   };
-
 
   return (
     <TouchableWithoutFeedback onPress={handleDismissKeyboard}>
@@ -76,41 +77,41 @@ const LoginScreen = () => {
         style={styles.container}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-    <ImageBackground source={require('../assets/images/fondo.jpg')} style={styles.backgroundImage}>
-      <View style={styles.container}>
-        <Image source={require('../assets/images/logo.png')} style={styles.logo} />
-        <TextInput
-          style={[styles.input, loginFailed && styles.inputError]} // Aplica estilo de error si loginFailed es verdadero
-          placeholder="Nombre de usuario"
-          placeholderTextColor="gray"
-          keyboardType="numeric" // Muestra el teclado numérico
-          value={user}
-          onChangeText={setUser}
-          onSubmitEditing={handleDismissKeyboard} // Minimiza el teclado al presionar "Enter"
-        />
-        <TextInput
-          style={[styles.input, loginFailed && styles.inputError]} // Aplica estilo de error si loginFailed es verdadero
-          placeholder="Contraseña"
-          placeholderTextColor="gray"
-              keyboardType="numeric" // Muestra el teclado numérico
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-          onSubmitEditing={handleDismissKeyboard} // Minimiza el teclado al presionar "Enter"
-        />
-        <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-          <Text style={styles.loginButtonText}>Iniciar Sesión</Text>
-        </TouchableOpacity>
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.requestButton} onPress={handleRecoverPassword}>
-            <Text style={styles.recoverPasswordText}>Solicitar Contraseña</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.requestButton} onPress={handleRequestUser}>
-            <Text style={styles.requestButtonText}>Solicitar Usuario</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </ImageBackground>
+        <ImageBackground source={require('../assets/images/fondo.jpg')} style={styles.backgroundImage}>
+          <View style={styles.container}>
+            <Image source={require('../assets/images/logo.png')} style={styles.logo} />
+            <TextInput
+              style={[styles.input, loginFailed && styles.inputError]}
+              placeholder="Nombre de usuario"
+              placeholderTextColor="gray"
+              keyboardType="numeric"
+              value={user}
+              onChangeText={setUser}
+              onSubmitEditing={handleDismissKeyboard}
+            />
+            <TextInput
+              style={[styles.input, loginFailed && styles.inputError]}
+              placeholder="Contraseña"
+              placeholderTextColor="gray"
+              keyboardType="numeric"
+              secureTextEntry
+              value={password}
+              onChangeText={setPassword}
+              onSubmitEditing={handleDismissKeyboard}
+            />
+            <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+              <Text style={styles.loginButtonText}>Iniciar Sesión</Text>
+            </TouchableOpacity>
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity style={styles.requestButton} onPress={handleRecoverPassword}>
+                <Text style={styles.recoverPasswordText}>Solicitar Contraseña</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.requestButton} onPress={handleRequestUser}>
+                <Text style={styles.requestButtonText}>Solicitar Usuario</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ImageBackground>
       </KeyboardAvoidingView>
     </TouchableWithoutFeedback>
   );
@@ -149,7 +150,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   inputError: {
-    borderColor: 'red', // Color del borde en caso de error
+    borderColor: 'red',
   },
   buttonContainer: {
     width: '100%',
@@ -186,6 +187,5 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
-
 
 export default LoginScreen;

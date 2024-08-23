@@ -16,8 +16,6 @@ export default StyleSheet.create({
     facturacionButton: {
         width: '100%',
         height: 150,
-        marginTop: 20,
-        marginBottom: 20,
         borderRadius: 20,
         overflow: 'hidden', // Asegura que la imagen no se salga del botón
         justifyContent: 'left',
@@ -40,26 +38,25 @@ export default StyleSheet.create({
         paddingLeft: 20,
     },
     section: {
-        marginTop: 20,
         alignItems: 'center',
         width: '100%',
         flexDirection: 'row',
-        justifyContent: 'center',
+        justifyContent: 'space-between',
+        marginVertical:20,
     },
     listItems: {
-        marginTop: 20,
-        width: '100%',
+        margin: -5,
         flexDirection: 'row',
         justifyContent: 'space-between',
     },
     subtitleSection: {
-        fontSize: 26,
+        fontSize: 24,
         marginBottom: 10,
         fontWeight: 'bold',
         color: '#7E7E7E',
     },
     list: {
-        justifyContent: 'space-between',
+        justifyContent: 'space-around',
         width: '100%',
     },
     item: {

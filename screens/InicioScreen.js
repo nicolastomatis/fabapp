@@ -56,14 +56,21 @@ const InicioScreen = ({ navigation }) => {
 
         console.log("Token:", token, "User:", user, "Mutual:", codigomutual); // Verifica los valores antes de hacer la solicitud
 
-        const response = await axios.post('http://10.10.0.49:3000/TraerNormaMutual', {
-          token,
-          user,
-          mutual: codigomutual
+        // Formatear los datos como una cadena de consulta
+        const formData = new URLSearchParams();
+        formData.append('token', token);
+        formData.append('user', user);
+        formData.append('mutual', codigomutual);
+
+        const response = await axios.post('http://www.fabawsmobile.faba.org.ar/Service1.asmx/TraerNormaMutual', formData.toString(), {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          }
         });
 
         console.log("Response:", response.data);
 
+        // Ajusta el acceso a los datos según la estructura de la respuesta
         const detalles = response.data.response[0];
         navigation.navigate('NormaDetalle', { details: detalles });
 
@@ -100,7 +107,7 @@ const InicioScreen = ({ navigation }) => {
         </TouchableOpacity>
 
         <View style={styles.section}>
-          <Text style={styles.subtitleSection}>Normas de Obras Sociales</Text>
+          <Text style={styles.subtitleSection}>Normas de{'\n'}Obras Sociales</Text>
 
           <TouchableOpacity style={[styles.verMasButtonItem]} onPress={() => navigation.navigate('NormasObrasSociales')}>
             <Text style={styles.textoButtonItem}>ver todas</Text>
