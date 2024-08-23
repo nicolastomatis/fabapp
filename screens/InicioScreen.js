@@ -1,101 +1,133 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, ImageBackground, FlatList, SafeAreaView, ScrollView } from 'react-native';
-import AntDesign from '@expo/vector-icons/AntDesign';
+import React, { useState, useEffect } from 'react';
+import { View, Text, FlatList, ActivityIndicator, StyleSheet, Dimensions, SafeAreaView, TouchableOpacity, ImageBackground } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 import styles from '../styles/InicioStyles'; // Ruta de acuerdo a tu estructura de carpetas
 
+const InicioScreen = ({ navigation }) => {
+  const [mutuales, setMutuales] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-const data = [
-  { id: '1', nombre: 'Obra Social del Personal de entidades Deportivas y Civiles', siglas: 'OSPEDYC', codigo: '2685', credencial: 'plástica', DNI: 'SI', digital: 'si', electronica: 'si, solo prácticas COVID', grillada: 'si', preimpresa: 'Si, enviar copia a atención al bioquímico para poder ser facturada', APB: ' 12 mil', copagos: 'No', ingresoAOL:'si', planes: 'A00, A01', fechaActualizacion:'13/04/2024'},
-  { id: '2', nombre: 'Obra Social de Petroleros', siglas: 'OSPE', codigo: '918', credencial: 'plástica', DNI: 'SI', digital: 'si', electronica: 'no', grillada: 'si', preimpresa: 'Si, consultar norma', APB: ' 12 mil', copagos: 'No', ingresoAOL:'si', planes: 'B25, B58', fechaActualizacion:'01/07/2024'},
-  { id: '3', nombre: 'Obra Social del quimicos y del carton', siglas: 'OSPEQC', codigo: '875', credencial: 'digital', DNI: 'SI', digital: 'si', electronica: 'si', grillada: 'si', preimpresa: 'Si, consultar norma', APB: ' 12 mil', copagos: 'No', ingresoAOL:'si', planes: 'bronce, plata, oro', fechaActualizacion:'01/06/2024'},
-  { id: '4', nombre: 'Obra Social de los panaderos', siglas: 'OSPAN', codigo: '75', credencial: 'digital', DNI: 'SI', digital: 'si', electronica: 'si', grillada: 'si', preimpresa: 'Si, consultar norma', APB: ' 12 mil', copagos: 'No', ingresoAOL:'si', planes: 'sin planes', fechaActualizacion:'01/08/2024'},
-  { id: '5', nombre: 'Obra Social de Empleados Bancarios', siglas: 'OSEB', codigo: '1234', credencial: 'plástica', DNI: 'SI', digital: 'si', electronica: 'si, solo prácticas COVID', grillada: 'si', preimpresa: 'Si, enviar copia a atención al bioquímico para poder ser facturada', APB: '12 mil', copagos: 'No', ingresoAOL:'si', planes: 'A00, A01', fechaActualizacion:'13/04/2024'},
-  { id: '6', nombre: 'Obra Social de Trabajadores de la Construcción', siglas: 'OSTC', codigo: '5678', credencial: 'plástica', DNI: 'SI', digital: 'si', electronica: 'no', grillada: 'si', preimpresa: 'Si, consultar norma', APB: '12 mil', copagos: 'No', ingresoAOL:'si', planes: 'B25, B58', fechaActualizacion:'01/07/2024'},
-  { id: '7', nombre: 'Obra Social de Maestros y Profesores', siglas: 'OSMP', codigo: '9101', credencial: 'digital', DNI: 'SI', digital: 'si', electronica: 'si', grillada: 'si', preimpresa: 'Si, consultar norma', APB: '12 mil', copagos: 'No', ingresoAOL:'si', planes: 'bronce, plata, oro', fechaActualizacion:'01/06/2024'},
-  { id: '8', nombre: 'Obra Social de Metalúrgicos', siglas: 'OSMET', codigo: '1121', credencial: 'digital', DNI: 'SI', digital: 'si', electronica: 'si', grillada: 'si', preimpresa: 'Si, consultar norma', APB: '12 mil', copagos: 'No', ingresoAOL:'si', planes: 'sin planes', fechaActualizacion:'01/08/2024'},
-  { id: '9', nombre: 'Ver más', siglas: '', isButton: true }, // El último elemento es el botón "Ver más"
-];
+  useEffect(() => {
+    const fetchMutualesData = async () => {
+      try {
+        const sessionData = await AsyncStorage.getItem('@session_data');
+        if (sessionData) {
+          const parsedData = JSON.parse(sessionData);
 
-export default function InicioScreen({ navigation }) {
-  React.useLayoutEffect(() => {
-    navigation.setOptions({
-      headerLeft: () => (
-        <TouchableOpacity onPress={() => navigation.navigate('Perfil')}>
-          <AntDesign name="user" size={40} color="#00A8A2" style={{ marginLeft: 20 }} />
-        </TouchableOpacity>
-      ),
-    });
-  }, [navigation]);
+          if (parsedData.token && parsedData.usuario && parsedData.mutuales) {
+            // Limitar a los primeros 8 elementos
+            const topMutuales = parsedData.mutuales.slice(0, 9);
+            setMutuales(topMutuales);
+          } else {
+            setError('Datos de sesión incompletos');
+          }
+        } else {
+          setError('No se encontraron datos de sesión');
+        }
+      } catch (error) {
+        console.error('Error al cargar los datos de sesión:', error);
+        setError('Error al recuperar los datos');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const renderItem = ({ item }) => {
-    if (item.isButton) {
-      return (
-        <TouchableOpacity
-          style={[styles.item, styles.verMasButtonItem]}
-          onPress={() => navigation.navigate('NormasObrasSociales')}
-        >
-          <AntDesign name="pluscircle" size={30} color="white" />
-        </TouchableOpacity>
-      );
+    fetchMutualesData();
+  }, []);
+
+  const handlePress = async (codigomutual) => {
+    console.log("Pressed codigomutual:", codigomutual); // Para verificar que el código se esté pasando correctamente
+
+    if (!codigomutual) {
+      setError('No se ha seleccionado ninguna mutual');
+      return;
     }
 
-    return (
-      <TouchableOpacity
-        style={styles.item}
-        onPress={() => navigation.navigate('NormaDetalle', {
-          nombre: item.nombre,
-          siglas: item.siglas,
-          codigo: item.codigo,
-          credencial: item.credencial,
-          DNI: item.DNI,
-          digital: item.digital,
-          electronica: item.nombre,
-          grillada: item.electronica,
-          preimpresa: item.preimpresa,
-          APB: item.APB,
-          copagos: item.copagos,
-          ingresoAOL: item.ingresoAOL,
-          planes: item.planes,
-          fechaActualizacion: item.fechaActualizacion,
-        })}
-      >
-        <Text style={styles.siglas}>{item.siglas}</Text>
-        <Text style={styles.codigo}>{item.codigo}</Text>
-      </TouchableOpacity>
-    );
+    setLoading(true);
+
+    try {
+      const sessionData = await AsyncStorage.getItem('@session_data');
+      if (sessionData) {
+        const parsedData = JSON.parse(sessionData);
+        const token = parsedData.token;
+        const user = parsedData.usuario.cod;
+
+        console.log("Token:", token, "User:", user, "Mutual:", codigomutual); // Verifica los valores antes de hacer la solicitud
+
+        const response = await axios.post('http://10.10.0.49:3000/TraerNormaMutual', {
+          token,
+          user,
+          mutual: codigomutual
+        });
+
+        console.log("Response:", response.data);
+
+        const detalles = response.data.response[0];
+        navigation.navigate('NormaDetalle', { details: detalles });
+
+      } else {
+        setError('No se encontraron datos de sesión');
+      }
+    } catch (error) {
+      console.error('Error al solicitar detalles:', error);
+      setError('Error al solicitar detalles');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Función para truncar el texto
+  const truncateText = (text, maxLength) => {
+    return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView>
-    <View style={styles.container}>
-      <TouchableOpacity
-        style={styles.facturacionButton}
-        onPress={() => navigation.navigate('Facturacion')}
-      >
-        <ImageBackground
-          source={require('../assets/images/fondoBoton.jpg')}
-          style={styles.backgroundImage}
-        >
-          <Text style={styles.buttonText}>Cierre de{"\n"}facturación</Text>
-        </ImageBackground>
-      </TouchableOpacity>
-      <View style={styles.section}>
-        <Text style={styles.subtitleSection}>Normas de obras sociales</Text>
-      </View>
+      <View style={styles.container}>
 
-      <View style={styles.listItems}>
-        <FlatList
-          data={data}
-          renderItem={renderItem}
-          keyExtractor={item => item.id}
-          numColumns={3}
-          contentContainerStyle={styles.list}
-          scrollEnabled={false} // Deshabilita el scroll
-        />
+        <TouchableOpacity
+          style={styles.facturacionButton}
+          onPress={() => navigation.navigate('Facturacion')}
+        >
+          <ImageBackground
+            source={require('../assets/images/fondoBoton.jpg')}
+            style={styles.backgroundImage}
+          >
+            <Text style={styles.buttonText}>Cierre de{"\n"}facturación</Text>
+          </ImageBackground>
+        </TouchableOpacity>
+
+        <View style={styles.section}>
+          <Text style={styles.subtitleSection}>Normas de Obras Sociales</Text>
+
+          <TouchableOpacity style={[styles.verMasButtonItem]} onPress={() => navigation.navigate('NormasObrasSociales')}>
+            <Text style={styles.textoButtonItem}>ver todas</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.listItems}>
+          <FlatList
+            data={mutuales}
+            keyExtractor={(item) => item.codigomutual.toString()}
+            numColumns={3}
+            contentContainerStyle={styles.list}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={styles.item}
+                onPress={() => handlePress(item.codigomutual)}
+              >
+                <Text style={styles.siglas}>{truncateText(item.sigla, 10)}</Text>
+              </TouchableOpacity>
+            )}
+          />
+        </View>
       </View>
-    </View>
-    </ScrollView>
     </SafeAreaView>
   );
-}
+};
+
+const { width } = Dimensions.get('window');
+const ITEM_WIDTH = '25%';
+
+export default InicioScreen;

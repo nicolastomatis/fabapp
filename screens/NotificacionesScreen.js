@@ -1,95 +1,154 @@
-import React, { useLayoutEffect, useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, FlatList, Animated, TouchableOpacity  } from 'react-native';
-import { PanGestureHandler } from 'react-native-gesture-handler';
+import React, { useEffect, useState } from 'react';
+import { View, Text, FlatList, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import AntDesign from '@expo/vector-icons/AntDesign';
 
-export default function NotificacionesScreen({ navigation }) {
-  useLayoutEffect(() => {
+const NotificacionesScreen = ({ navigation }) => {
+  const [novedades, setNovedades] = useState([]);
+  const [filteredNovedades, setFilteredNovedades] = useState([]);
+  const [filters, setFilters] = useState({
+    comunicaciones: true,
+    novedades: true,
+    gacetillas: true,
+    generales: true,
+    otras: true,
+  });
+
+  React.useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
         <TouchableOpacity onPress={() => navigation.navigate('ConfiguracionNotificacionesScreen')}>
-          <AntDesign name="setting" size={30} color="#00A8A2" style={{ marginRight: 20 }} />
+          <AntDesign name="setting" size={40} color="#00A8A2" style={{ marginRight: 20 }} />
         </TouchableOpacity>
       ),
     });
   }, [navigation]);
 
-  const [notificaciones, setNotificaciones] = useState([
-    { id: '1', tipo: 'general', nombre: '202408075158 - ISALUD S.R.L. ', asunto: 'Incremento de Aranceles' },
-    { id: '2', tipo: 'novedad', nombre: '202408075158 - ISALUD S.R.L. ', asunto: 'Incremento de Aranceles' },
-    { id: '3', tipo: 'gacetilla', nombre: '202408075158 - ISALUD S.R.L. ', asunto: 'Incremento de Aranceles' },
-    { id: '4', tipo: 'otras', nombre: '202408075158 - ISALUD S.R.L. ', asunto: 'Incremento de Aranceles' },
-    { id: '5', tipo: 'comunicacion', nombre: '202408075158 - ISALUD S.R.L. ', asunto: 'Incremento de Aranceles' },
-    { id: '6', tipo: 'general', nombre: '202408075158 - ISALUD S.R.L. ', asunto: 'Incremento de Aranceles' },
-    { id: '7', tipo: 'novedad', nombre: '202408075158 - ISALUD S.R.L. ', asunto: 'Incremento de Aranceles' },
-    { id: '8', tipo: 'gacetilla', nombre: '202408075158 - ISALUD S.R.L. ', asunto: 'Incremento de Aranceles' },
-    { id: '9', tipo: 'comunicacion', nombre: '202408075158 - ISALUD S.R.L. ', asunto: 'Incremento de Aranceles' },
-    { id: '10', tipo: 'otras', nombre: '202408075158 - ISALUD S.R.L. ', asunto: 'Incremento de Aranceles' },
-  ]);
+  const obtenerNovedades = async () => {
+    try {
+      const sessionData = await AsyncStorage.getItem('@session_data');
+      if (sessionData) {
+        const { token, usuario } = JSON.parse(sessionData);
 
-  const borrarNotificacion = (id) => {
-    setNotificaciones(notificaciones.filter(notificacion => notificacion.id !== id));
+        if (!token || !usuario || !usuario.cod) {
+          throw new Error('Datos de sesión incompletos');
+        }
+
+        const res = await fetch('http://10.10.0.49:3000/TraerNovedades', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ token, user: usuario.cod })
+        });
+
+        if (!res.ok) {
+          throw new Error(`Error en la respuesta del servidor: ${res.statusText}`);
+        }
+
+        const data = await res.json();
+        console.log('Datos obtenidos:', data);
+
+        if (data.response && Array.isArray(data.response)) {
+          setNovedades(data.response);
+        } else {
+          Alert.alert('Error', 'No se encontraron novedades');
+        }
+      } else {
+        Alert.alert('Error', 'No se encontraron datos de sesión');
+      }
+    } catch (error) {
+      console.error('Fetch Error:', error);
+      Alert.alert('Error', 'Error al obtener las novedades');
+    }
   };
 
-  const renderNotificacion = ({ item }) => {
-    const translateX = new Animated.Value(0);
+  const aplicarFiltros = (novedades, filtros) => {
+    const novedadesFiltradas = novedades.filter(novedad => {
+      if (novedad.tiponovedad === 'COM - Comunicaciones' && !filtros.comunicaciones) return false;
+      if (novedad.tiponovedad === 'NOV - Novedades' && !filtros.novedades) return false;
+      if (novedad.tiponovedad === 'GAC - Gacetillas' && !filtros.gacetillas) return false;
+      if (novedad.tiponovedad === 'GEN - Generales' && !filtros.generales) return false;
+      if (novedad.tiponovedad === 'Otras' && !filtros.otras) return false;
+      return true;
+    });
+    console.log('Novedades filtradas:', novedadesFiltradas); // Log para verificar
+    setFilteredNovedades(novedadesFiltradas);
+  };
 
-    const handleGesture = Animated.event(
-      [{ nativeEvent: { translationX: translateX } }],
-      { useNativeDriver: true }
-    );
-
-    const handleGestureEnd = (event) => {
-      const translationX = event.nativeEvent.translationX;
-      const direction = translationX > 0 ? 1 : -1;
-
-      if (Math.abs(translationX) > 150) {
-        Animated.timing(translateX, {
-          toValue: 500 * direction,
-          duration: 300,
-          useNativeDriver: true,
-        }).start(() => borrarNotificacion(item.id));
-      } else {
-        Animated.spring(translateX, {
-          toValue: 0,
-          useNativeDriver: true,
-        }).start();
+  useEffect(() => {
+    const cargarFiltros = async () => {
+      const savedFilters = await AsyncStorage.getItem('@filtros_notificaciones');
+      if (savedFilters) {
+        const parsedFilters = JSON.parse(savedFilters);
+        setFilters(parsedFilters);
       }
     };
 
-    const estiloNotificacion = [
-      styles.notificacion,
-      item.tipo === 'comunicacion' && styles.comunicacion,
-      item.tipo === 'novedad' && styles.novedad,
-      item.tipo === 'gacetilla' && styles.gacetilla,
-      item.tipo === 'general' && styles.general,
-      item.tipo === 'otras' && styles.otras,
-    ];
+    obtenerNovedades();
+    cargarFiltros();
+  }, []);
 
-    return (
-      <PanGestureHandler
-        onGestureEvent={handleGesture}
-        onEnded={handleGestureEnd}
-      >
-        <Animated.View style={[...estiloNotificacion, { transform: [{ translateX }] }]}>
-          <Text style={styles.nombre}>{item.nombre}</Text>
-          <Text style={styles.asunto}>{item.asunto}</Text>
-        </Animated.View>
-      </PanGestureHandler>
-    );
+  useEffect(() => {
+    aplicarFiltros(novedades, filters);
+  }, [filters, novedades]);
+
+  useEffect(() => {
+    const guardarFiltros = async () => {
+      try {
+        await AsyncStorage.setItem('@filtros_notificaciones', JSON.stringify(filters));
+      } catch (error) {
+        console.error('Error al guardar filtros:', error);
+      }
+    };
+
+    guardarFiltros();
+  }, [filters]);
+
+  // Función para extraer la parte antes del guion
+  const extractCodigo = (tiponovedad) => {
+    return tiponovedad.split(' - ')[0]; // Esto devolverá "COM", "NOV", etc.
+  };
+
+  const getBackgroundColor = (tiponovedad) => {
+    switch (tiponovedad) {
+      case 'COM - Comunicaciones':
+        return '#FB9E70'; // Rojo claro
+      case 'NOV - Novedades':
+        return '#A27BF9'; // Verde claro
+      case 'GAC - Gacetillas':
+        return '#62BFB6'; // Azul claro
+      case 'GEN - Generales':
+        return '#6998FA'; // Amarillo claro
+      case 'Otras':
+        return '#FF7093'; // Gris
+      default:
+        return '#CBCBCB'; // Gris por defecto
+    }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <FlatList
-        data={notificaciones}
-        renderItem={renderNotificacion}
-        keyExtractor={item => item.id}
-        contentContainerStyle={styles.listaNotificaciones}
+        data={filteredNovedades}
+        keyExtractor={(item, index) => index.toString()}
+        renderItem={({ item }) => (
+          <View style={[styles.notificacion, { backgroundColor: getBackgroundColor(item.tiponovedad) }]}>
+            <View style={styles.row}>
+              <Text style={styles.nombre}>{extractCodigo(item.tiponovedad)}</Text>
+              <Text style={styles.nombre}>{item.nronovedad}</Text>
+              <View style={styles.obrasocialContainer}>
+                <Text style={styles.obrasocial} numberOfLines={1} ellipsizeMode='tail'>{item.obrasocial}</Text>
+              </View>
+            </View>
+            <Text style={styles.asunto}>{item.asunto}</Text>
+          </View>
+        )}
+        ListEmptyComponent={<Text style={styles.emptyText}>No hay novedades disponibles</Text>}
       />
-    </SafeAreaView>
+    </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -97,39 +156,44 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     padding: 20,
   },
-  listaNotificaciones: {
-    width: '100%',
-    padding: 20,
-  },
   notificacion: {
-    width: '100%',
     padding: 20,
-    marginBottom: 20,
+    marginBottom: 10,
     borderRadius: 10,
   },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'start',
+    marginBottom: 5,
+  },
   nombre: {
-    fontSize: 20,
-    color: 'white',
+    fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 10,
-  },  
+    marginBottom: 5,
+    color: 'white',
+    marginRight: 5,
+  },
+  obrasocialContainer: {
+    flex: 1,
+    marginRight: 5,
+  },
+  obrasocial: {
+    fontSize: 18,
+    color: 'white',
+    flexShrink: 1,
+    textAlign: 'left',
+    fontWeight: 'bold',
+  },
   asunto: {
     fontSize: 16,
     color: 'white',
+    width: '100%',
   },
-  comunicacion: {
-    backgroundColor: '#FB9E70',
-  },
-  novedad: {
-    backgroundColor: '#A27BF9',
-  },
-  gacetilla: {
-    backgroundColor: '#62BFB6',
-  },
-  general: {
-    backgroundColor: '#6998FA',
-  },
-  otras: {
-    backgroundColor: '#CBCBCB',
+  emptyText: {
+    fontSize: 16,
+    textAlign: 'center',
+    color: '#888',
   },
 });
+
+export default NotificacionesScreen;

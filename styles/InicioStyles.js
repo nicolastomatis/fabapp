@@ -72,14 +72,14 @@ export default StyleSheet.create({
         borderRadius: 10,
     },
     siglas: {
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: 'bold',
         color: 'white',
         width: '100%',
         textAlign: 'center',
     },
     codigo: {
-        fontSize: 14,
+        fontSize: 6,
         marginBottom: 10,
         fontWeight: 'bold',
         color: '#FF893E',
@@ -87,11 +87,17 @@ export default StyleSheet.create({
         width: '100%',
     },
     verMasButtonItem: {
-        backgroundColor: '#C4C4C4',
+        padding: 10,
+        borderRadius: 10,
+        backgroundColor: '#FF893E',
         justifyContent: 'center',
         alignContent: 'center',
         textAlign: 'right',
-        width: '100%',
+    },
+    textoButtonItem: {
+        color: 'white',
+        fontSize: 18,
+        fontWeight: 'bold',
     },
 
 });

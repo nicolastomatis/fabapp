@@ -1,102 +1,95 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Switch, SafeAreaView, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, Switch, StyleSheet, Button, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function ConfiguracionNotificacionesScreen() {
-  const [notifications, setNotifications] = useState({
-    comunicaciones: false,
-    novedades: false,
-    gacetillas: false,
-    generales: false,
-    actualizacionNorma: false,
-    envioSobres: false,
-    recordatorios: false,
+const ConfiguracionNotificacionesScreen = ({ navigation }) => {
+  const [filters, setFilters] = useState({
+    comunicaciones: true,
+    novedades: true,
+    gacetillas: true,
+    generales: true,
+    otras: true,
   });
 
-  const toggleSwitch = (key) => {
-    setNotifications((prevNotifications) => ({
-      ...prevNotifications,
-      [key]: !prevNotifications[key],
-    }));
+  useEffect(() => {
+    const cargarFiltros = async () => {
+      const savedFilters = await AsyncStorage.getItem('@filtros_notificaciones');
+      if (savedFilters) {
+        setFilters(JSON.parse(savedFilters));
+      }
+    };
+    cargarFiltros();
+  }, []);
+
+  const guardarFiltros = async () => {
+    try {
+      await AsyncStorage.setItem('@filtros_notificaciones', JSON.stringify(filters));
+      Alert.alert('Configuración guardada', 'Tus preferencias han sido guardadas.');
+      // Notificar a la pantalla de notificaciones para que recargue los datos
+      navigation.navigate('Notificaciones'); // O usa un mecanismo para actualizar la pantalla de notificaciones
+    } catch (error) {
+      Alert.alert('Error', 'Hubo un problema al guardar la configuración.');
+    }
+  };
+
+  const toggleSwitch = (tipo) => {
+    setFilters({ ...filters, [tipo]: !filters[tipo] });
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView style={styles.container}>
-        <View style={styles.option}>
-          <Text style={styles.label}>Comunicaciones</Text>
-          <Switch
-            value={notifications.comunicaciones}
-            onValueChange={() => toggleSwitch('comunicaciones')}
-          />
-        </View>
-        <View style={styles.option}>
-          <Text style={styles.label}>Novedades</Text>
-          <Switch
-            value={notifications.novedades}
-            onValueChange={() => toggleSwitch('novedades')}
-          />
-        </View>
-        <View style={styles.option}>
-          <Text style={styles.label}>Gacetillas</Text>
-          <Switch
-            value={notifications.gacetillas}
-            onValueChange={() => toggleSwitch('gacetillas')}
-          />
-        </View>
-        <View style={styles.option}>
-          <Text style={styles.label}>Generales</Text>
-          <Switch
-            value={notifications.generales}
-            onValueChange={() => toggleSwitch('generales')}
-          />
-        </View>
-        <View style={styles.option}>
-          <Text style={styles.label}>Actualización de la Norma</Text>
-          <Switch
-            value={notifications.actualizacionNorma}
-            onValueChange={() => toggleSwitch('actualizacionNorma')}
-          />
-        </View>
-        <View style={styles.option}>
-          <Text style={styles.label}>Envío de Sobres</Text>
-          <Switch
-            value={notifications.envioSobres}
-            onValueChange={() => toggleSwitch('envioSobres')}
-          />
-        </View>
-        <View style={styles.option}>
-          <Text style={styles.label}>Recordatorios</Text>
-          <Switch
-            value={notifications.recordatorios}
-            onValueChange={() => toggleSwitch('recordatorios')}
-          />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+    <View style={styles.container}>
+      <View style={styles.filterRow}>
+        <Text>Comunicaciones</Text>
+        <Switch
+          value={filters.comunicaciones}
+          onValueChange={() => toggleSwitch('comunicaciones')}
+        />
+      </View>
+      <View style={styles.filterRow}>
+        <Text>Novedades</Text>
+        <Switch
+          value={filters.novedades}
+          onValueChange={() => toggleSwitch('novedades')}
+        />
+      </View>
+      <View style={styles.filterRow}>
+        <Text>Gacetillas</Text>
+        <Switch
+          value={filters.gacetillas}
+          onValueChange={() => toggleSwitch('gacetillas')}
+        />
+      </View>
+      <View style={styles.filterRow}>
+        <Text>Generales</Text>
+        <Switch
+          value={filters.generales}
+          onValueChange={() => toggleSwitch('generales')}
+        />
+      </View>
+      <View style={styles.filterRow}>
+        <Text>Otras</Text>
+        <Switch
+          value={filters.otras}
+          onValueChange={() => toggleSwitch('otras')}
+        />
+      </View>
+      <Button title="Guardar Configuración" onPress={guardarFiltros} />
+    </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
   container: {
     flex: 1,
     padding: 20,
+    backgroundColor: '#fff',
   },
-  option: {
+  filterRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
     marginBottom: 20,
-    paddingBottom: 20,
-    borderColor: 'gray',
-    borderBottomWidth: 0.2,
-  },
-  label: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: 'grey',
+    alignItems: 'center',
   },
 });
+
+export default ConfiguracionNotificacionesScreen;

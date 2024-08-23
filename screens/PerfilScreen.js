@@ -18,9 +18,7 @@ export default function PerfilScreen({ navigation }) {
         {/* Imagen redonda */}
         <AntDesign name="user" size={200} color="#00A8A2" />
       </View>
-      <Text style={styles.nombre}>Fulano, Mengano</Text>
-      <Text style={styles.codigoFacturante}>Nº XXXX</Text>
-
+      
       </View>
       <View style={styles.buttonContainer}>
       <TouchableOpacity style={styles.cambiarContraseña} onPress={handleRecoverPassword}>

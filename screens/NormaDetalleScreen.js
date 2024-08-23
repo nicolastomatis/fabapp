@@ -1,10 +1,52 @@
-import React, { useLayoutEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
+import React, { useLayoutEffect, useState, useEffect } from 'react';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Linking } from 'react-native';
+import RenderHtml from 'react-native-render-html';
 import Collapsible from 'react-native-collapsible';
 import AntDesign from '@expo/vector-icons/AntDesign';
+import { Dimensions } from 'react-native';
 
-export default function NormaDetalleScreen({ route, navigation }) {
-  const { nombre, siglas, codigo, credencial, DNI, digital, electronica, grillada, preimpresa, APB, copagos, ingresoAOL, planes, fechaActualizacion } = route.params;
+const NormaDetalleScreen = ({ navigation, route }) => {
+  const { details } = route.params;
+  const { width } = Dimensions.get('window');
+
+  const renderField = (label, value, isCollapsible = false, collapsed = true, onToggle = () => {}, showLabel = true) => {
+    if (value) {
+      if (typeof value === 'string' && value.trim() === '') return null;
+  
+      const isHtml = value.includes('<') && value.includes('>'); // Detecta si el valor es HTML
+  
+      return (
+        <View style={isCollapsible ? styles.contenedorConLinea : styles.contenedor}>
+          {isCollapsible ? (
+            <>
+              <TouchableOpacity style={styles.desplegable} onPress={onToggle}>
+                {showLabel && <Text style={styles.titulo}>{label}:</Text>}
+                <AntDesign name={collapsed ? "downcircleo" : "upcircleo"} size={20} color="#FF893E" />
+              </TouchableOpacity>
+              <Collapsible collapsed={collapsed} style={styles.fondo}>
+                {isHtml ? (
+                  <RenderHtml contentWidth={Dimensions.get('window').width} source={{ html: value }} />
+                ) : (
+                  <Text style={styles.informacion}>{value}</Text>
+                )}
+              </Collapsible>
+            </>
+          ) : (
+            <>
+              {showLabel && <Text style={styles.titulo}>{label}:</Text>}
+              {isHtml ? (
+                <RenderHtml contentWidth={Dimensions.get('window').width} source={{ html: value }} />
+              ) : (
+                <Text style={styles.informacion}>{value}</Text>
+              )}
+            </>
+          )}
+        </View>
+      );
+    }
+    return null;
+  };
+  
 
   const [collapsedSections, setCollapsedSections] = useState({
     apb: true,
@@ -19,108 +61,58 @@ export default function NormaDetalleScreen({ route, navigation }) {
     }));
   };
 
-  const handlePress = () => {
-    // Acción que deseas realizar cuando se presione el botón
-    alert('Botón flotante presionado');
+  const baseUrl = 'http://faba.org.ar/';
+  
+  const renderPdfButton = (pdfPartialUrl) => {
+    if (pdfPartialUrl && pdfPartialUrl.trim()) {  // Verifica que pdfPartialUrl no sea undefined, null, o una cadena vacía
+      const filePath = pdfPartialUrl.replace('\\FABAWEBCL1', '');
+      const fullUrl = `${baseUrl}${filePath.replace(/\\/g, '/')}`;
+
+      return (
+        <TouchableOpacity style={styles.button} onPress={() => Linking.openURL(fullUrl)}>
+          <Text style={styles.buttonText}>Abrir PDF</Text>
+        </TouchableOpacity>
+      );
+    } else {
+      return <Text>No hay PDF disponible</Text>; // Mensaje cuando no hay un PDF válido
+    }
   };
 
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      title: siglas, // Establece el título del encabezado
-    });
-  }, [navigation, siglas]);
+  useEffect(() => {
+    if (details?.sigla) {
+      navigation.setOptions({ title: details.sigla });
+    }
+  }, [details?.sigla]);
 
   return (
+    <ScrollView style={styles.container}>
 
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView style={styles.container}>
+      {renderField('', details.nombre, false, true, () => { }, false)}
+      {renderField('Código', details.codigomutual)}
+      {renderField('Fecha de actualización', details.fechaactualizacion)}
+      {renderField('Credencial Digital', details.credencialdigital)}
+      {renderField('Credencial Plástica', details.credencialplastica)}
+      {renderField('DNI', details.dni)}
 
-        <View style={styles.contenedor}>
-          <Text style={styles.titulo}> {nombre}</Text>
-        </View>
+      {renderField('Formato de orden', details.formatoOrden, true, collapsedSections.formatoOrden, () => toggleSection('formatoOrden'))}
 
-        <View style={styles.contenedor}>
-          <Text style={styles.titulo}>Código:</Text>
-          <Text style={styles.informacion}> {codigo}</Text>
-        </View>
+      {renderField('APB', details.apb, true, collapsedSections.apb, () => toggleSection('apb'))}
 
-        <View style={styles.contenedor}>
-          <Text style={styles.titulo}>Fecha:</Text>
-          <Text style={styles.informacion}> {fechaActualizacion}</Text>
-        </View>
+      {renderField('Copago', details.copago)}
 
-        <View style={styles.contenedor}>
-          <Text style={styles.titulo}>Credencial:</Text>
-          <Text style={styles.informacion}> {credencial}</Text>
-        </View>
+      {renderField('Planes', details.planes, true, collapsedSections.planes, () => toggleSection('planes'))}
 
-        <View style={styles.contenedorConLinea}>
-          <TouchableOpacity style={styles.desplegable} onPress={() => toggleSection('apb')}>
-            <Text style={styles.titulo}>APB:</Text>
-            <AntDesign name="downcircleo" size={20} color="#FF893E" />
-          </TouchableOpacity>
-          <Collapsible collapsed={collapsedSections.apb}>
-            <View>
-              <Text style={styles.valorAPB}>{APB}</Text>
-            </View>
-          </Collapsible>
-        </View>
-        <View style={styles.contenedorConLinea}>
-          <TouchableOpacity style={styles.desplegable} onPress={() => toggleSection('formatoOrden')}>
-            <Text style={styles.titulo}>Formato de Orden:</Text>
-            <AntDesign name="downcircleo" size={20} color="#FF893E" />
-          </TouchableOpacity>
-          <Collapsible collapsed={collapsedSections.formatoOrden} style={styles.fondo}>
-            <View style={styles.contenedorSinLinea}>
-              <Text style={styles.subtitulo}>Orden digital:</Text>
-              <Text style={styles.informacion}>{digital}</Text>
-            </View>
-            <View style={styles.contenedorSinLinea}>
-              <Text style={styles.subtitulo}>Orden Electrónica:</Text>
-              <Text style={styles.informacion}>{electronica}</Text>
-            </View>
-            <View style={styles.contenedorSinLinea}>
-              <Text style={styles.subtitulo}>Orden Grillada:</Text>
-              <Text style={styles.informacion}>{grillada}</Text>
-            </View>
-            <View style={styles.contenedorSinLinea}>
-              <Text style={styles.subtitulo}>Orden Pre-Impresa:</Text>
-              <Text style={styles.informacion}>{preimpresa}</Text>
-            </View>
-          </Collapsible>
-        </View>
-        <View style={styles.contenedor}>
-          <Text style={styles.titulo}>DNI:</Text>
-          <Text style={styles.informacion}> {DNI}</Text>
-        </View>
+      {renderField('AOL', details.aol)}
+      
+      {renderField('Fecha de publicación', details.fechapublicacion)}
 
-        <View style={styles.contenedor}>
-          <Text style={styles.titulo}>Ingreso por AOL:</Text>
-          <Text style={styles.informacion}> {ingresoAOL}</Text>
-        </View>
-
-        <View style={styles.contenedor}>
-          <Text style={styles.titulo}>Copago:</Text>
-          <Text style={styles.informacion}> {copagos}</Text>
-        </View>
-        <View style={styles.contenedorConLinea}>
-          <TouchableOpacity style={styles.desplegable} onPress={() => toggleSection('planes')}>
-            <Text style={styles.titulo}>Planes:</Text>
-            <AntDesign name="downcircleo" size={20} color="#FF893E" />
-          </TouchableOpacity>
-          <Collapsible collapsed={collapsedSections.planes}>
-            <View style={styles.contenedorSinLinea}>
-              <Text style={styles.informacion}>{planes}</Text>
-            </View>
-          </Collapsible>
-        </View>
-      </ScrollView >
-      <TouchableOpacity style={styles.floatingButton} onPress={handlePress}>
-        <Text style={styles.pdfNorma}>Ver Norma</Text>
+      <TouchableOpacity style={styles.floatingButton}>
+        <Text style={styles.pdfNorma}>{renderPdfButton(details.pdf)}</Text>
       </TouchableOpacity>
-    </SafeAreaView>
+
+    </ScrollView>
   );
-}
+};
 
 const styles = StyleSheet.create({
 
@@ -160,7 +152,7 @@ const styles = StyleSheet.create({
     color: 'grey',
     paddingVertical: 10,
   },
-  
+
 
   subtitulo: {
     fontWeight: 'bold',
@@ -170,25 +162,22 @@ const styles = StyleSheet.create({
   },
 
   informacion: {
-    fontSize: 16,
+    fontWeight: 'bold',
+    fontSize: 18,
     color: '#FF893E',
     paddingVertical: 10,
   },
   valorAPB: {
     fontSize: 16,
     color: 'grey',
-    padding:10,
+    padding: 10,
     borderRadius: 10,
     borderWidth: 2,
     borderColor: '#FF893E',
   },
 
   floatingButton: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    position: 'absolute',
-    right: 20,
-    bottom: 40,
+    marginTop: 20,
     padding: 20,
     borderRadius: 20,
     backgroundColor: '#00A8A2',
@@ -199,3 +188,5 @@ const styles = StyleSheet.create({
     color: 'white',
   },
 });
+
+export default NormaDetalleScreen;
