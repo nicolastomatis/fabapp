@@ -1,13 +1,55 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground, Dimensions, Image, Linking, Alert, KeyboardAvoidingView, Platform, Keyboard, TouchableWithoutFeedback } from 'react-native';
+import React, { useState, useRef } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ImageBackground,
+  Dimensions,
+  Image,
+  Linking,
+  Modal,
+  Animated,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
+  TouchableWithoutFeedback,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const windowWidth = Dimensions.get('window').width;
+const windowHeight = Dimensions.get('window').height;
 
 const LoginScreen = () => {
   const [user, setUser] = useState('');
   const [password, setPassword] = useState('');
-  const navigation = useNavigation();
+  const [showModal, setShowModal] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
   const [loginFailed, setLoginFailed] = useState(false);
+  const navigation = useNavigation();
+  
+  // Animación de zoom
+  const scaleAnim = useRef(new Animated.Value(0.5)).current;
+
+  const openModal = (message) => {
+    setModalMessage(message);
+    setShowModal(true);
+    Animated.timing(scaleAnim, {
+      toValue: 1,
+      duration: 100,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const closeModal = () => {
+    Animated.timing(scaleAnim, {
+      toValue: 0,
+      duration: 100,
+      useNativeDriver: true,
+    }).start(() => setShowModal(false));
+  };
 
   const handleLogin = async () => {
     try {
@@ -20,9 +62,9 @@ const LoginScreen = () => {
       const res = await fetch('http://www.fabawsmobile.faba.org.ar/Service1.asmx/IniciarSesion', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: formData.toString() // Enviar los datos en el formato adecuado
+        body: formData.toString(), // Enviar los datos en el formato adecuado
       });
 
       if (!res.ok) {
@@ -40,13 +82,13 @@ const LoginScreen = () => {
         navigation.navigate('Main');
         setLoginFailed(false);
       } else {
-        // Mostrar alerta de usuario o contraseña inválidos
-        Alert.alert('Error', 'Usuario o contraseña inválidos');
+        // Mostrar el modal de error
+        openModal('Usuario o contraseña inválidos');
         setLoginFailed(true);
       }
     } catch (error) {
       console.error('Fetch Error:', error);
-      Alert.alert('Error', 'Error al comunicarse con el servidor');
+      openModal('Error al comunicarse con el servidor');
       setLoginFailed(true);
     }
   };
@@ -110,15 +152,28 @@ const LoginScreen = () => {
                 <Text style={styles.requestButtonText}>Solicitar Usuario</Text>
               </TouchableOpacity>
             </View>
+            {/* Modal */}
+            <Modal
+              visible={showModal}
+              transparent={true}
+              animationType="none"
+              onRequestClose={closeModal}
+            >
+              <View style={styles.modalOverlay}>
+                <Animated.View style={[styles.modalContainer, { transform: [{ scale: scaleAnim }] }]}>
+                  <Text style={styles.modalText}>{modalMessage}</Text>
+                  <TouchableOpacity style={styles.modalButton} onPress={closeModal}>
+                    <Text style={styles.modalButtonText}>Aceptar</Text>
+                  </TouchableOpacity>
+                </Animated.View>
+              </View>
+            </Modal>
           </View>
         </ImageBackground>
       </KeyboardAvoidingView>
     </TouchableWithoutFeedback>
   );
 };
-
-const windowWidth = Dimensions.get('window').width;
-const windowHeight = Dimensions.get('window').height;
 
 const styles = StyleSheet.create({
   backgroundImage: {
@@ -183,6 +238,42 @@ const styles = StyleSheet.create({
   },
   recoverPasswordText: {
     color: '#00A8A2',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContainer: {
+    width: '90%',
+    padding: 20,
+    backgroundColor: 'white',
+    borderRadius: 10,
+    alignItems: 'center',
+    shadowOffset: {
+      width: 0,
+      height: 0,
+    },
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  modalText: {
+    fontSize: 18,
+    color: 'grey',
+    marginBottom: 40,
+  },
+  modalButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: '#FF893E',
+    borderRadius: 10,
+  },
+  modalButtonText: {
+    color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
   },

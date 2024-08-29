@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TextInput, ActivityIndicator, StyleSheet, Dimensions, SafeAreaView, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import qs from 'qs'; // Para serializar los datos en formato x-www-form-urlencoded
 
 const NormasObrasSocialesScreen = ({ navigation }) => {
   const [mutuales, setMutuales] = useState([]);
@@ -57,36 +56,36 @@ const NormasObrasSocialesScreen = ({ navigation }) => {
       setError('No se ha seleccionado ninguna mutual');
       return;
     }
-
+  
     setLoading(true);
-
+  
     try {
       const sessionData = await AsyncStorage.getItem('@session_data');
       if (sessionData) {
         const parsedData = JSON.parse(sessionData);
         const token = parsedData.token;
         const user = parsedData.usuario.cod;
-
-        console.log("Token:", token, "User:", user, "Mutual:", codigomutual); // Verifica los valores antes de hacer la solicitud
-
-        // Formatear los datos como una cadena de consulta
+  
+        console.log("Token:", token, "User:", user, "Mutual:", codigomutual);
+  
         const formData = new URLSearchParams();
         formData.append('token', token);
         formData.append('user', user);
         formData.append('mutual', codigomutual);
-
+  
         const response = await axios.post('http://www.fabawsmobile.faba.org.ar/Service1.asmx/TraerNormaMutual', formData.toString(), {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded'
           }
         });
-
+  
         console.log("Response:", response.data);
-
-        // Ajusta el acceso a los datos según la estructura de la respuesta
-        const detalles = response.data.response[0];
+  
+        const detalles = response.data.response.detallesNorma;
+        console.log("Detalles recibidos:", detalles);
+  
         navigation.navigate('NormaDetalle', { details: detalles });
-
+  
       } else {
         setError('No se encontraron datos de sesión');
       }
@@ -97,6 +96,7 @@ const NormasObrasSocialesScreen = ({ navigation }) => {
       setLoading(false);
     }
   };
+  
 
   if (loading) {
     return (

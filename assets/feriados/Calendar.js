@@ -3,18 +3,18 @@ import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native
 import moment from 'moment';
 import holidays from '../feriados/feriados.json'; // Asegúrate de que la ruta sea correcta
 
-moment.updateLocale('es', {
+moment.defineLocale('es', {
   week: {
-    dow: 0, // El primer día de la semana es domingo
+    dow: 1, // El primer día de la semana es domingo
   },
 });
 
 // Configuración de los nombres de los días de la semana
-const dayNames = ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá'];
+const dayNames = ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá', 'Do'];
 
 // Generar un rango de fechas para el mes actual
 const generateDays = (date) => {
-  const startOfMonth = moment(date).startOf('month').startOf('week');
+  const startOfMonth = moment(date).startOf('month').startOf('week'); // Semana empieza en domingo
   const endOfMonth = moment(date).endOf('month').endOf('week');
   const days = [];
   for (let day = startOfMonth; day <= endOfMonth; day.add(1, 'day')) {
@@ -23,25 +23,28 @@ const generateDays = (date) => {
   return days;
 };
 
-const Calendar = ({ date, onDayPress, markedDates }) => {
+const Calendar = ({ date, onDayPress, markedDates, currentDate }) => {
   const [currentMonth, setCurrentMonth] = useState(moment(date));
   const days = generateDays(currentMonth);
 
   const holidaysMap = new Map(holidays.map(holiday => [holiday.date, holiday.name]));
+  const today = moment().format('YYYY-MM-DD'); // Fecha de hoy
 
   const renderDay = ({ item }) => {
     const formattedDate = item.format('YYYY-MM-DD');
     const isMarked = markedDates.includes(formattedDate);
     const isHoliday = holidaysMap.has(formattedDate);
     const isCurrentMonth = item.month() === currentMonth.month();
+    const isToday = formattedDate === today;
 
     return (
       <TouchableOpacity
         style={[
           styles.day,
-          !isCurrentMonth,
+          !isCurrentMonth && styles.outsideMonth,
           isMarked && styles.markedDay,
-          isHoliday && styles.holidayDay
+          isHoliday && styles.holidayDay,
+          isToday && styles.todayDay // Estilo para el día actual
         ]}
         onPress={() => onDayPress(item)}
       >
@@ -49,7 +52,8 @@ const Calendar = ({ date, onDayPress, markedDates }) => {
           styles.dayText,
           !isCurrentMonth && styles.outsideMonthText,
           isMarked && !isHoliday && styles.markedDayText,
-          isHoliday && styles.holidayDayText
+          isHoliday && styles.holidayDayText,
+          isToday && styles.todayDayText // Color del texto para el día actual
         ]}>
           {item.date()}
         </Text>
@@ -117,6 +121,14 @@ const styles = StyleSheet.create({
   holidayDay: {
     backgroundColor: 'grey', // Color para los días feriados
   },
+  todayDay: {
+    borderColor: '#00A8A2',
+    borderWidth: 2, // Borde especial para el día actual
+  },
+  todayDayText: {
+    color: '#00A8A2', // Color del texto para el día actual
+    fontWeight: 'bold',
+  },
   dayText: {
     color: 'grey',
   },
@@ -143,6 +155,9 @@ const styles = StyleSheet.create({
   },
   holidayDayText: {
     color: 'white', // Color del texto para los días feriados
+  },
+  outsideMonth: {
+    opacity: 0.5, // Estilo para los días fuera del mes actual
   },
 });
 

@@ -1,6 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, Switch, StyleSheet, Button, Alert } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+// ConfiguracionNotificacionesScreen.js
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, Switch, TouchableOpacity, Modal, Animated } from 'react-native';
+import styles from '../styles/configuracionNotificaciones';
+import { cargarFiltros } from '../components/notificaciones/storage';
+import { handleGuardarFiltros } from '../components/notificaciones/guardarFiltros';
+import { closeModal } from '../components/notificaciones/cerrarModal';
+import { toggleSwitch } from '../components/notificaciones/switch';
 
 const ConfiguracionNotificacionesScreen = ({ navigation }) => {
   const [filters, setFilters] = useState({
@@ -11,85 +16,65 @@ const ConfiguracionNotificacionesScreen = ({ navigation }) => {
     otras: true,
   });
 
+  const [showModal, setShowModal] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+
+  const scaleValue = useRef(new Animated.Value(0)).current;
+  const opacityValue = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
-    const cargarFiltros = async () => {
-      const savedFilters = await AsyncStorage.getItem('@filtros_notificaciones');
+    const initFilters = async () => {
+      const savedFilters = await cargarFiltros();
       if (savedFilters) {
-        setFilters(JSON.parse(savedFilters));
+        setFilters(savedFilters);
       }
     };
-    cargarFiltros();
+    initFilters();
   }, []);
-
-  const guardarFiltros = async () => {
-    try {
-      await AsyncStorage.setItem('@filtros_notificaciones', JSON.stringify(filters));
-      Alert.alert('Configuración guardada', 'Tus preferencias han sido guardadas.');
-      // Notificar a la pantalla de notificaciones para que recargue los datos
-      navigation.navigate('Notificaciones'); // O usa un mecanismo para actualizar la pantalla de notificaciones
-    } catch (error) {
-      Alert.alert('Error', 'Hubo un problema al guardar la configuración.');
-    }
-  };
-
-  const toggleSwitch = (tipo) => {
-    setFilters({ ...filters, [tipo]: !filters[tipo] });
-  };
 
   return (
     <View style={styles.container}>
-      <View style={styles.filterRow}>
-        <Text>Comunicaciones</Text>
-        <Switch
-          value={filters.comunicaciones}
-          onValueChange={() => toggleSwitch('comunicaciones')}
-        />
-      </View>
-      <View style={styles.filterRow}>
-        <Text>Novedades</Text>
-        <Switch
-          value={filters.novedades}
-          onValueChange={() => toggleSwitch('novedades')}
-        />
-      </View>
-      <View style={styles.filterRow}>
-        <Text>Gacetillas</Text>
-        <Switch
-          value={filters.gacetillas}
-          onValueChange={() => toggleSwitch('gacetillas')}
-        />
-      </View>
-      <View style={styles.filterRow}>
-        <Text>Generales</Text>
-        <Switch
-          value={filters.generales}
-          onValueChange={() => toggleSwitch('generales')}
-        />
-      </View>
-      <View style={styles.filterRow}>
-        <Text>Otras</Text>
-        <Switch
-          value={filters.otras}
-          onValueChange={() => toggleSwitch('otras')}
-        />
-      </View>
-      <Button title="Guardar Configuración" onPress={guardarFiltros} />
+      {Object.keys(filters).map((key) => (
+        <View key={key} style={styles.filterRow}>
+          <Text style={styles.filterText}>{key.charAt(0).toUpperCase() + key.slice(1)}</Text>
+          <Switch
+            value={filters[key]}
+            onValueChange={() => toggleSwitch(key, filters, setFilters)}
+            thumbColor={filters[key] ? '#00A8A2' : '#CCC'}
+            trackColor={{ false: '#767577', true: '#1E6B65' }}
+            style={styles.switch}
+          />
+        </View>
+      ))}
+      <TouchableOpacity
+        style={styles.saveButton}
+        onPress={() => handleGuardarFiltros(filters, setModalMessage, setShowModal, scaleValue, opacityValue)}
+      >
+        <Text style={styles.saveButtonText}>Guardar Configuración</Text>
+      </TouchableOpacity>
+      <Modal
+        visible={showModal}
+        transparent={true}
+        animationType="none"
+        onRequestClose={() => closeModal(setShowModal, navigation, filters, scaleValue, opacityValue)}
+      >
+        <View style={styles.modalOverlay}>
+          <Animated.View style={[
+            styles.modalContainer,
+            {
+              transform: [{ scale: scaleValue }],
+              opacity: opacityValue,
+            }
+          ]}>
+            <Text style={styles.modalText}>{modalMessage}</Text>
+            <TouchableOpacity style={styles.modalButton} onPress={() => closeModal(setShowModal, navigation, filters, scaleValue, opacityValue)}>
+              <Text style={styles.modalButtonText}>Aceptar</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
+      </Modal>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: '#fff',
-  },
-  filterRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-    alignItems: 'center',
-  },
-});
 
 export default ConfiguracionNotificacionesScreen;

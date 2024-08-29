@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Linking, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import AntDesign from '@expo/vector-icons/AntDesign';
-import axios from 'axios'; // Asegúrate de tener axios instalado
+import axios from 'axios';
+import CustomModal from '../components/CustomModal'; // Asegúrate de ajustar la ruta según tu estructura de archivos
 
-const NotificacionesScreen = ({ navigation }) => {
+const NotificacionesScreen = ({ route, navigation }) => {
   const [novedades, setNovedades] = useState([]);
   const [filteredNovedades, setFilteredNovedades] = useState([]);
   const [filters, setFilters] = useState({
@@ -14,28 +14,51 @@ const NotificacionesScreen = ({ navigation }) => {
     generales: true,
     otras: true,
   });
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalTitle, setModalTitle] = useState('');
+  const [modalMessage, setModalMessage] = useState('');
 
   React.useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
         <TouchableOpacity onPress={() => navigation.navigate('ConfiguracionNotificacionesScreen')}>
-          <AntDesign name="setting" size={40} color="#00A8A2" style={{ marginRight: 20 }} />
+          <Image source={require('../assets/icons/setting.png')} style={styles.icon}/>
         </TouchableOpacity>
       ),
     });
   }, [navigation]);
 
+  useEffect(() => {
+    const obtenerFiltros = async () => {
+      const savedFilters = await AsyncStorage.getItem('@filtros_notificaciones');
+      if (savedFilters) {
+        setFilters(JSON.parse(savedFilters));
+      }
+    };
+    obtenerFiltros();
+  }, []);
+
+  useEffect(() => {
+    if (route.params?.filtrosActualizados) {
+      setFilters(route.params.filtrosActualizados);
+    }
+  }, [route.params?.filtrosActualizados]);
+
   const obtenerNovedades = async () => {
     try {
+      console.log('Obteniendo novedades...');
       const sessionData = await AsyncStorage.getItem('@session_data');
+
       if (sessionData) {
         const { token, usuario } = JSON.parse(sessionData);
 
         if (!token || !usuario || !usuario.cod) {
-          throw new Error('Datos de sesión incompletos');
+          setModalTitle('Error');
+          setModalMessage('Datos de sesión incompletos');
+          setModalVisible(true);
+          return;
         }
 
-        // Construir los datos en formato application/x-www-form-urlencoded
         const formData = new URLSearchParams();
         formData.append('token', token);
         formData.append('user', usuario.cod);
@@ -46,24 +69,32 @@ const NotificacionesScreen = ({ navigation }) => {
           }
         });
 
+        console.log('Respuesta del servidor:', response.data);
+
         const data = response.data;
-        console.log('Datos obtenidos:', data);
 
         if (data.response && Array.isArray(data.response)) {
           setNovedades(data.response);
         } else {
-          Alert.alert('Error', 'No se encontraron novedades');
+          setModalTitle('Error');
+          setModalMessage('No se encontraron novedades');
+          setModalVisible(true);
         }
       } else {
-        Alert.alert('Error', 'No se encontraron datos de sesión');
+        setModalTitle('Error');
+        setModalMessage('No se encontraron datos de sesión');
+        setModalVisible(true);
       }
     } catch (error) {
-      console.error('Fetch Error:', error);
-      Alert.alert('Error', 'Error al obtener las novedades');
+      console.error('Error al obtener las novedades:', error);
+      setModalTitle('Error');
+      setModalMessage('Error al obtener las novedades');
+      setModalVisible(true);
     }
   };
 
   const aplicarFiltros = (novedades, filtros) => {
+    console.log('Aplicando filtros:', filtros);
     const novedadesFiltradas = novedades.filter(novedad => {
       if (novedad.tiponovedad === 'COM - Comunicaciones' && !filtros.comunicaciones) return false;
       if (novedad.tiponovedad === 'NOV - Novedades' && !filtros.novedades) return false;
@@ -72,40 +103,18 @@ const NotificacionesScreen = ({ navigation }) => {
       if (novedad.tiponovedad === 'Otras' && !filtros.otras) return false;
       return true;
     });
-    console.log('Novedades filtradas:', novedadesFiltradas); // Log para verificar
     setFilteredNovedades(novedadesFiltradas);
   };
 
   useEffect(() => {
-    const cargarFiltros = async () => {
-      const savedFilters = await AsyncStorage.getItem('@filtros_notificaciones');
-      if (savedFilters) {
-        const parsedFilters = JSON.parse(savedFilters);
-        setFilters(parsedFilters);
-      }
-    };
-
     obtenerNovedades();
-    cargarFiltros();
   }, []);
 
   useEffect(() => {
+    console.log('Aplicando filtros a novedades...');
     aplicarFiltros(novedades, filters);
   }, [filters, novedades]);
 
-  useEffect(() => {
-    const guardarFiltros = async () => {
-      try {
-        await AsyncStorage.setItem('@filtros_notificaciones', JSON.stringify(filters));
-      } catch (error) {
-        console.error('Error al guardar filtros:', error);
-      }
-    };
-
-    guardarFiltros();
-  }, [filters]);
-
-  // Función para extraer la parte antes del guion
   const extractCodigo = (tiponovedad) => {
     return tiponovedad.split(' - ')[0]; // Esto devolverá "COM", "NOV", etc.
   };
@@ -133,7 +142,14 @@ const NotificacionesScreen = ({ navigation }) => {
         data={filteredNovedades}
         keyExtractor={(item, index) => index.toString()}
         renderItem={({ item }) => (
-          <View style={[styles.notificacion, { backgroundColor: getBackgroundColor(item.tiponovedad) }]}>
+          <TouchableOpacity
+            style={[styles.notificacion, { backgroundColor: getBackgroundColor(item.tiponovedad) }]}
+            onPress={() => {
+              // Aquí defines el enlace que deseas abrir
+              const link = 'http://faba.org.ar/novedades.asp'; // Cambia esta URL por el enlace deseado
+              Linking.openURL(link).catch(err => console.error("Failed to open URL:", err));
+            }}
+          >
             <View style={styles.row}>
               <Text style={styles.nombre}>{extractCodigo(item.tiponovedad)}</Text>
               <Text style={styles.nombre}>{item.nronovedad}</Text>
@@ -142,9 +158,15 @@ const NotificacionesScreen = ({ navigation }) => {
               </View>
             </View>
             <Text style={styles.asunto}>{item.asunto}</Text>
-          </View>
+          </TouchableOpacity>
         )}
         ListEmptyComponent={<Text style={styles.emptyText}>No hay novedades disponibles</Text>}
+      />
+      <CustomModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        title={modalTitle}
+        message={modalMessage}
       />
     </View>
   );
@@ -193,6 +215,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     color: '#888',
+  },
+  icon: {
+    width: 40,
+    height: 40,
+    marginRight: 20,
+    tintColor: '#009D96',
   },
 });
 

@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, Text, SafeAreaView } from 'react-native';
-import Calendar from '../assets/feriados/Calendar'; // Ajusta la ruta según la estructura de tu proyecto
+import Calendar from '../assets/feriados/Calendar';
 import moment from 'moment';
-import 'moment/locale/es'; // Importar localización en español
+import 'moment/locale/es';
 import Entypo from '@expo/vector-icons/Entypo';
 
-// Importar el archivo JSON de feriados
-const feriados = require('../assets/feriados/feriados.json'); // Ajusta la ruta según la estructura de tu proyecto
+const feriados = require('../assets/feriados/feriados.json');
 
 // Función para obtener el último día del mes
 const getLastDayOfMonth = (date) => {
@@ -15,7 +14,6 @@ const getLastDayOfMonth = (date) => {
 };
 
 export default function FacturacionScreen() {
-  moment.locale('es'); // Configura moment para usar español
 
   const [markedDates, setMarkedDates] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
@@ -64,8 +62,8 @@ export default function FacturacionScreen() {
         <View style={styles.referencia}>
           <View style={styles.descripcion}>
             <Text style={styles.texto}>Les recordamos las fechas límite para:</Text>
-            <Text style={styles.informacionTexto}>- Enviar a través de AOL las transacciones para facturar PAMI.</Text>
-            <Text style={styles.informacionTexto}>- Suspender órdenes de IOMA pacientes NO atendidos.</Text>
+            <Text style={styles.informacionTexto}><Entypo name="controller-record" size={15} color="#FF893E" /> Enviar a través de AOL las transacciones para facturar PAMI.</Text>
+            <Text style={styles.informacionTexto}><Entypo name="controller-record" size={15} color="#FF893E" /> Suspender órdenes de IOMA pacientes NO atendidos.</Text>
           </View>
         </View>
       </View>
@@ -130,7 +128,7 @@ const styles = StyleSheet.create({
   informacionTexto: {
     color: 'grey',
     fontSize: 16,
-    marginTop:10,
+    marginTop:15,
     textAlign:'justify',
   },
 });

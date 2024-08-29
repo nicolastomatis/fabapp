@@ -2,9 +2,8 @@ import * as React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { TouchableOpacity, Text } from 'react-native';
+import { TouchableOpacity, Text, View, Image, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import AntDesign from '@expo/vector-icons/AntDesign';
 
 import LoginScreen from './screens/LoginScreen';
 import InicioScreen from './screens/InicioScreen';
@@ -13,7 +12,6 @@ import AyudaScreen from './screens/AyudaScreen';
 import MasScreen from './screens/MasScreen';
 import PerfilScreen from './screens/PerfilScreen';
 import FacturacionScreen from './screens/FacturacionScreen';
-import CambiarContrasenaScreen from './screens/CambiarContrasenaScreen';
 import NormasObrasSocialesScreen from './screens/NormasObrasSocialesScreen';
 import NormaDetalleScreen from './screens/NormaDetalleScreen';
 import ConfiguracionNotificacionesScreen from './screens/ConfiguracionNotificacionesScreen';
@@ -21,12 +19,18 @@ import ConfiguracionNotificacionesScreen from './screens/ConfiguracionNotificaci
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
+// Imágenes PNG
+import homeIcon from './assets/icons/home.png';
+import notificationIcon from './assets/icons/notificaciones.png';
+import questionIcon from './assets/icons/ayuda.png';
+import moreIcon from './assets/icons/mas.png';
+
 function BackButton() {
   const navigation = useNavigation();
 
   return (
     <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginLeft: 20 }}>
-      <AntDesign name="arrowleft" size={30} color="#0671B8" />
+      <Image source={require('./assets/icons/atras.png')} style={styles.icon} />
     </TouchableOpacity>
   );
 }
@@ -36,28 +40,37 @@ function MainTabs() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color }) => {
-          let iconName;
+          let imageSource;
 
           if (route.name === 'Inicio') {
-            iconName = focused ? 'home' : 'home';
+            imageSource = homeIcon;
           } else if (route.name === 'Notificaciones') {
-            iconName = focused ? 'notification' : 'notification';
+            imageSource = notificationIcon;
           } else if (route.name === 'Ayuda') {
-            iconName = focused ? 'question' : 'question';
+            imageSource = questionIcon;
           } else if (route.name === 'Más') {
-            iconName = focused ? 'ellipsis1' : 'ellipsis1';
+            imageSource = moreIcon;
           }
 
-          const iconSize = focused ? 30 : 25;
-
-          return <AntDesign name={iconName} size={iconSize} color={color} />;
+          return (
+            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'flex-start', marginTop: 10 }}>
+              <Image
+                source={imageSource}
+                style={{ width: 30, height: 30, tintColor: color, fontWeight: 'bold' }}
+              />
+            </View>
+          );
         },
+        tabBarLabel: ({ color }) => (
+          <Text style={{ color, fontSize: 14, marginBottom: 15 }}>
+            {route.name}
+          </Text>
+        ),
         tabBarActiveTintColor: '#00A8A2',
         tabBarInactiveTintColor: 'gray',
         tabBarStyle: {
           backgroundColor: 'white',
-          borderTopWidth: 0.2,
-          height: 100,
+          height: 110,
         },
         tabBarLabelStyle: {
           fontSize: 12,
@@ -84,7 +97,7 @@ function MainTabs() {
           tabBarInactiveTintColor: '#fff',
           tabBarStyle: {
             backgroundColor: '#0073A2',
-            height: 100,
+            height: 110,
           },
           headerStyle: {
             height: 100,
@@ -123,7 +136,6 @@ export default function App() {
         <Stack.Screen name="Main" component={MainTabs} options={{ headerShown: false }} />
         <Stack.Screen name="Perfil" component={PerfilScreen} options={{ title: '¡Bienvenido!' }} />
         <Stack.Screen name="Facturacion" component={FacturacionScreen} options={{ title: 'Cierre de Facturación' }} />
-        <Stack.Screen name="CambiarContrasena" component={CambiarContrasenaScreen} options={{ title: 'Cambiar Contraseña' }} />
         <Stack.Screen name="NormasObrasSociales" component={NormasObrasSocialesScreen} options={{ title: 'Normas de Obras Sociales' }} />
         <Stack.Screen name="NormaDetalle" component={NormaDetalleScreen} options={{ title: 'Detalle de Norma' }} />
         <Stack.Screen name="ConfiguracionNotificacionesScreen" component={ConfiguracionNotificacionesScreen} options={{ title: 'Editar notificaciones' }} />
@@ -131,3 +143,9 @@ export default function App() {
     </NavigationContainer>
   );
 }
+const styles = StyleSheet.create({
+  icon: {
+    width: 35,
+    height: 35,
+  },
+});

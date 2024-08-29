@@ -71,7 +71,7 @@ const InicioScreen = ({ navigation }) => {
         console.log("Response:", response.data);
 
         // Ajusta el acceso a los datos según la estructura de la respuesta
-        const detalles = response.data.response[0];
+        const detalles = response.data.response.detallesNorma;
         navigation.navigate('NormaDetalle', { details: detalles });
 
       } else {
