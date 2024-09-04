@@ -1,10 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Linking, SafeAreaView, Image } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Linking, SafeAreaView } from 'react-native';
 import Collapsible from 'react-native-collapsible';
 import AntDesign from '@expo/vector-icons/AntDesign';
 
 const NormaDetalleScreen = ({ navigation, route }) => {
   const { details } = route.params;
+
+  // Verificación para asegurarse de que 'details' está definido
+  if (!details || typeof details !== 'object') {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Text style={styles.errorText}>Error al cargar los detalles. Por favor, inténtelo nuevamente.</Text>
+      </SafeAreaView>
+    );
+  }
 
   // Función para limpiar etiquetas HTML
   const stripHtmlTags = (html) => {
@@ -29,27 +38,40 @@ const NormaDetalleScreen = ({ navigation, route }) => {
       return null;
     }
   
-    // Función para renderizar las imágenes según el valor
     const renderValue = () => {
       if (typeof value === 'string') {
         if (value.toUpperCase() === 'SI') {
-          return <Image source={require('../assets/icons/si.png')} style={styles.icon} />;
-
+          return <AntDesign name="checkcircleo" size={25} color="green" />;
         } else if (value.toUpperCase() === 'NO') {
-          return <Image source={require('../assets/icons/no.png')} style={styles.icon} />;
-
+          return <AntDesign name="closecircleo" size={25} color="red" />;
         }
       }
-      // Si no es "SI" o "NO", mostrar el valor normal
+    
       return Array.isArray(value) ? value.map((item, index) => (
-        <View key={index} style={styles.itemContainer}>
-          <Text style={styles.itemTitle}>{item.nombre}:</Text>
-          <Text style={styles.itemText}>{stripHtmlTags(item.texto)}</Text>
+        <View key={index} style={styles.itemFormatoOrdenes}>
+        <View style={styles.itemFormatoOrdenesTituloYAcepta}>
+          <Text style={styles.itemTitle}>{item.tipo}:</Text>
+          {/* Aquí se aplica la misma lógica para item.acepta */}
+          {typeof item.acepta === 'string' && item.acepta.toUpperCase() === 'SÍ' ? (
+            <AntDesign name="checkcircleo" size={25} color="green" />
+          ) : typeof item.acepta === 'string' && item.acepta.toUpperCase() === 'NO' ? (
+            <AntDesign name="closecircleo" size={25} color="red" />
+          ) : (
+            <Text style={styles.itemText}>{stripHtmlTags(item.acepta)}</Text>
+          )}          
+          
+        </View>   
+        
+        <View style={styles.itemFormatoOrdenesTituloYAcepta}>
+        <Text style={styles.itemText}>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec consectetur rhoncus purus, sed commodo turpis semper id.</Text>
         </View>
+          
+          </View>
       )) : (typeof value === 'object')
         ? JSON.stringify(value)
         : stripHtmlTags(value);
     };
+    
   
     return (
       <View style={isCollapsible ? styles.contenedorConLinea : styles.contenedor}>
@@ -72,11 +94,7 @@ const NormaDetalleScreen = ({ navigation, route }) => {
       </View>
     );
   };
-  
-  
-  
 
-  // Función para renderizar el botón PDF
   const renderPdfButton = (pdfPartialUrl) => {
     if (pdfPartialUrl && pdfPartialUrl.trim()) {
       const filePath = pdfPartialUrl.replace('\\FABAWEBCL1', '');
@@ -112,16 +130,16 @@ const NormaDetalleScreen = ({ navigation, route }) => {
   }, [details?.sigla]);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.Safecontainer}>
       <ScrollView style={styles.container}>
         {renderField('', details.nombre, false, true, () => {}, false)}
         
         <View style={styles.contenedorConLinea}>
-        <Text style={styles.descripcion}>Documentación que debe presentar el afiliado para su atención en el laboratorio</Text>
+          <Text style={styles.descripcion}>Documentación que debe presentar el afiliado para su atención en el laboratorio</Text>
         </View>
 
         {renderField('Código', details.codigomutual)}
-        {renderField('Fecha de actualización', details.fechaactualizacion)}
+        {renderField('Fecha de act.', details.fechaactualizacion)}
         {renderField('Credencial Digital', details.credencialdigital)}
         {renderField('Credencial Plástica', details.credencialplastica)}
         {renderField('DNI', details.dni)}
@@ -136,7 +154,7 @@ const NormaDetalleScreen = ({ navigation, route }) => {
 
         {renderField('AOL', details.aol)}
 
-        {renderField('Fecha de publicación', details.fechapublicacion)}
+        {renderField('Fecha de pub.', details.fechapublicacion)}
 
         {renderPdfButton(details.pdf)}
       </ScrollView>
@@ -145,10 +163,14 @@ const NormaDetalleScreen = ({ navigation, route }) => {
 };
 
 const styles = StyleSheet.create({
+  Safecontainer: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
   container: {
     flex: 1,
-    padding: 20,
     backgroundColor: '#fff',
+    padding:20,
   },
   contenedor: {
     flexDirection: 'row',
@@ -156,7 +178,6 @@ const styles = StyleSheet.create({
     alignItems:'center',
     paddingBottom: 10,
     marginBottom: 10,
-    height:50,
     borderBottomWidth: 1,
     borderBottomColor: '#D9D9D9',
   },
@@ -210,12 +231,21 @@ const styles = StyleSheet.create({
     marginBottom: 0,
     flexDirection: 'column',
   },
+  itemFormatoOrdenes: {
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    marginBottom:20,
+  },
+  itemFormatoOrdenesTituloYAcepta: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginLeft:0,
+  },
   itemTitle: {
     fontWeight: 'bold',
     fontSize: 16,
     color: 'grey',
     marginBottom:10,
-    width:'100%',
   },
   itemText: {
     fontSize: 16,
@@ -235,6 +265,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#0671B8',
     textAlign: 'center',
+  },
+  errorText: {
+    fontSize: 18,
+    color: 'red',
+    textAlign: 'center',
+    margin: 20,
+    padding:20,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: '#0671B8',
   },
 });
 

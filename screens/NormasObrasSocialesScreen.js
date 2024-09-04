@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TextInput, ActivityIndicator, StyleSheet, Dimensions, SafeAreaView, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, TextInput, ActivityIndicator, StyleSheet, Dimensions, SafeAreaView, TouchableOpacity, KeyboardAvoidingView, Keyboard,
+  TouchableWithoutFeedback, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
@@ -53,78 +54,94 @@ const NormasObrasSocialesScreen = ({ navigation }) => {
 
   const handlePress = async (codigomutual) => {
     if (!codigomutual) {
-      setError('No se ha seleccionado ninguna mutual');
-      return;
+        setError('No se ha seleccionado ninguna mutual');
+        return;
     }
-  
+
     setLoading(true);
-  
+
     try {
-      const sessionData = await AsyncStorage.getItem('@session_data');
-      if (sessionData) {
-        const parsedData = JSON.parse(sessionData);
-        const token = parsedData.token;
-        const user = parsedData.usuario.cod;
-  
-        console.log("Token:", token, "User:", user, "Mutual:", codigomutual);
-  
-        const formData = new URLSearchParams();
-        formData.append('token', token);
-        formData.append('user', user);
-        formData.append('mutual', codigomutual);
-  
-        const response = await axios.post('http://www.fabawsmobile.faba.org.ar/Service1.asmx/TraerNormaMutual', formData.toString(), {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-          }
-        });
-  
-        console.log("Response:", response.data);
-  
-        const detalles = response.data.response.detallesNorma;
-        console.log("Detalles recibidos:", detalles);
-  
-        navigation.navigate('NormaDetalle', { details: detalles });
-  
-      } else {
-        setError('No se encontraron datos de sesión');
-      }
+        const sessionData = await AsyncStorage.getItem('@session_data');
+        if (sessionData) {
+            const parsedData = JSON.parse(sessionData);
+            const token = parsedData.token;
+            const user = parsedData.usuario.cod;
+
+            console.log("Token:", token, "User:", user, "Mutual:", codigomutual);
+
+            // Formatear los datos como una cadena de consulta
+            const formData = new URLSearchParams();
+            formData.append('token', token);
+            formData.append('user', user);
+            formData.append('mutual', codigomutual);
+
+            // Reemplaza el siguiente URL con el endpoint de Firebase Functions
+            const firebaseFunctionUrl = 'https://us-central1-fabapp-b7caa.cloudfunctions.net/traerNormaMutual';
+
+            const response = await axios.post(firebaseFunctionUrl, formData.toString(), {
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            });
+
+            console.log("Response:", response.data);
+
+            const detalles = response.data.response.detallesNorma;
+            console.log("Detalles recibidos:", detalles);
+
+            navigation.navigate('NormaDetalle', { details: detalles });
+
+        } else {
+            setError('No se encontraron datos de sesión');
+        }
     } catch (error) {
-      console.error('Error al solicitar detalles:', error);
-      setError('Error al solicitar detalles');
+        console.error('Error al solicitar detalles:', error);
+        setError('Error al solicitar detalles');
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
-  };
-  
+};
 
-  if (loading) {
+// Mostrar el indicador de carga o el mensaje de error según el estado
+if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#FF893E" />
-      </View>
+        <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#FF893E" />
+        </View>
     );
-  }
+}
 
-  if (error) {
+if (error) {
     return <Text>{error}</Text>;
-  }
+}
 
   // Función para truncar el texto
   const truncateText = (text, maxLength) => {
     return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
   };
 
+  
+
+  const handleDismissKeyboard = () => {
+    Keyboard.dismiss();
+  };
+
+
   return (
+    <TouchableWithoutFeedback onPress={handleDismissKeyboard}>
+    <KeyboardAvoidingView
+      style={styles.safeArea}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
         <TextInput
           style={styles.searchBar}
           placeholder="Buscar por sigla o código"
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
-        <FlatList
+        <FlatList style={styles.container}
           data={filteredMutuales}
           keyExtractor={(item) => item.codigomutual ? item.codigomutual.toString() : Math.random().toString()}
           numColumns={3}
@@ -138,8 +155,9 @@ const NormasObrasSocialesScreen = ({ navigation }) => {
             </TouchableOpacity>
           )}
         />
-      </View>
     </SafeAreaView>
+      </KeyboardAvoidingView>
+    </TouchableWithoutFeedback>
   );
 };
 
@@ -153,8 +171,8 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    padding: 20,
     backgroundColor: '#fff',
+    paddingHorizontal:20,
   },
   searchBar: {
     height: 40,
@@ -162,7 +180,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 10,
     paddingLeft: 10,
-    marginBottom: 20,
+    margin:20,
   },
   list: {
     justifyContent: 'space-between',

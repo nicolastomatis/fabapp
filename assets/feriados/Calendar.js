@@ -84,6 +84,8 @@ const Calendar = ({ date, onDayPress, markedDates, currentDate }) => {
         renderItem={renderDay}
         keyExtractor={(item) => item.format('YYYY-MM-DD')}
         numColumns={7}
+        scrollEnabled={false}  // Deshabilita el scroll interno
+
       />
     </View>
   );

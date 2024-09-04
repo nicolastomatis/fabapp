@@ -6,12 +6,15 @@ export default StyleSheet.create({
         flex: 1,
         backgroundColor: '#fff',
     },
+    scrollViewContainer: {
+      flexGrow: 1,
+    },
     container: {
         flex: 1,
         alignItems: 'center',
         backgroundColor: '#fff',
         flexDirection: 'column',
-        padding: 20,
+        padding: 16,
     },
     facturacionButton: {
         width: '100%',
@@ -42,9 +45,10 @@ export default StyleSheet.create({
         width: '100%',
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginVertical:20,
+        marginVertical:16,
     },
     listItems: {
+        flex: 1,
         margin: -5,
         flexDirection: 'row',
         justifyContent: 'space-between',

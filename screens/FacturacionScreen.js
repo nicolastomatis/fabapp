@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Text, SafeAreaView } from 'react-native';
+import { View, StyleSheet, Text, SafeAreaView, ScrollView } from 'react-native';
 import Calendar from '../assets/feriados/Calendar';
 import moment from 'moment';
 import 'moment/locale/es';
@@ -14,7 +14,6 @@ const getLastDayOfMonth = (date) => {
 };
 
 export default function FacturacionScreen() {
-
   const [markedDates, setMarkedDates] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
 
@@ -41,32 +40,33 @@ export default function FacturacionScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        <View style={styles.calendarContainer}>
-          <Calendar
-            date={new Date()}
-            onDayPress={handleDayPress}
-            markedDates={markedDates}
-          />
-        </View>
-        <View style={styles.referencia}>
-          <View style={styles.item}>
-            <Text style={styles.fechalimite}>Fechas límite:</Text>
-            <Entypo name="controller-record" size={40} color="#FF893E" />
+      <ScrollView contentContainerStyle={styles.scrollViewContent}>
+        <View style={styles.container}>
+          <View style={styles.calendarContainer}>
+            <Calendar
+              date={new Date()}
+              onDayPress={handleDayPress}
+              markedDates={markedDates}
+            />
           </View>
-          <View style={styles.item}>
-            <Text style={styles.feriado}>Feriado</Text>
-            <Entypo name="controller-record" size={40} color="grey" />
+          <View style={styles.referencia}>
+            <View style={styles.item}>
+              <Text style={styles.fechalimite}>Fechas límite:</Text>
+              <Entypo name="controller-record" size={40} color="#FF893E" />
+            </View>
+            <View style={styles.item}>
+              <Text style={styles.feriado}>Feriado</Text>
+              <Entypo name="controller-record" size={40} color="grey" />
+            </View>
           </View>
-        </View>
-        <View style={styles.referencia}>
           <View style={styles.descripcion}>
             <Text style={styles.texto}>Les recordamos las fechas límite para:</Text>
             <Text style={styles.informacionTexto}><Entypo name="controller-record" size={15} color="#FF893E" /> Enviar a través de AOL las transacciones para facturar PAMI.</Text>
             <Text style={styles.informacionTexto}><Entypo name="controller-record" size={15} color="#FF893E" /> Suspender órdenes de IOMA pacientes NO atendidos.</Text>
+            {/* Resto de los textos */}
           </View>
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -75,21 +75,19 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  scrollViewContent: {
+    flexGrow: 1,
     padding: 20,
   },
   container: {
-    width: '100%',
-    height:400,
+    flex: 1,
     backgroundColor: '#fff',
-    padding: 20,
   },
   calendarContainer: {
-    paddingHorizontal: 20,
     backgroundColor: '#F1F1F1',
     borderRadius: 20,
     padding: 20,
-    width: '100%',
-    height:'100%',
   },
   referencia: {
     marginTop: 20,
@@ -99,15 +97,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    width: '100%',
   },
   item: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   descripcion: {
-    flexDirection: 'column',
-    alignItems: 'start',
+    marginTop: 20,
+    backgroundColor: '#F1F1F1',
+    padding: 20,
+    borderRadius: 20,
   },
   fechalimite: {
     fontWeight: 'bold',
@@ -123,12 +122,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: 'grey',
     fontSize: 18,
-    textAlign:'justify',
   },
   informacionTexto: {
     color: 'grey',
     fontSize: 16,
-    marginTop:15,
-    textAlign:'justify',
+    marginTop: 15,
+    textAlign: 'justify',
   },
 });

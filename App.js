@@ -4,6 +4,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { TouchableOpacity, Text, View, Image, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { Platform } from 'react-native';
 
 import LoginScreen from './screens/LoginScreen';
 import InicioScreen from './screens/InicioScreen';
@@ -53,16 +54,16 @@ function MainTabs() {
           }
 
           return (
-            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'flex-start', marginTop: 10 }}>
+            <View style={{ flex: 1, alignItems: 'center', marginTop: 5 }}>
               <Image
                 source={imageSource}
-                style={{ width: 30, height: 30, tintColor: color, fontWeight: 'bold' }}
+                style={{ width: 25, height: 25, tintColor: color, fontWeight: 'bold' }}
               />
             </View>
           );
         },
         tabBarLabel: ({ color }) => (
-          <Text style={{ color, fontSize: 14, marginBottom: 15 }}>
+          <Text style={{ color, fontSize: 14, marginBottom: 10}}>
             {route.name}
           </Text>
         ),
@@ -70,13 +71,19 @@ function MainTabs() {
         tabBarInactiveTintColor: 'gray',
         tabBarStyle: {
           backgroundColor: 'white',
-          height: 110,
+          height: 60,
         },
+        ...Platform.select({
+          ios: {
+            tabBarStyle: {
+              height: 90,
+            },
+          },
+        }),
         tabBarLabelStyle: {
           fontSize: 12,
         },
         headerStyle: {
-          height: 100,
           backgroundColor: 'white',
         },
         headerTitleStyle: {
@@ -97,10 +104,17 @@ function MainTabs() {
           tabBarInactiveTintColor: '#fff',
           tabBarStyle: {
             backgroundColor: '#0073A2',
-            height: 110,
+            height: 60,
           },
+          ...Platform.select({
+            ios: {
+              tabBarStyle: {
+                backgroundColor: '#0073A2',
+                height: 90,
+              },
+            },
+          }),
           headerStyle: {
-            height: 100,
             backgroundColor: '#0073A2',
           },
           headerTitleStyle: {
@@ -111,18 +125,19 @@ function MainTabs() {
         }}
       />
     </Tab.Navigator>
+    
   );
 }
 
 export default function App() {
   return (
+    
     <NavigationContainer>
       <Stack.Navigator
         initialRouteName="Login"
         screenOptions={{
           headerStyle: {
             backgroundColor: 'white',
-            height: 100,
           },
           headerTitleStyle: {
             color: '#0671B8',

@@ -53,45 +53,46 @@ const LoginScreen = () => {
 
   const handleLogin = async () => {
     try {
-      // Formatear los datos como una cadena de consulta
-      const formData = new URLSearchParams();
-      formData.append('user', user);
-      formData.append('password', password);
+        const formData = new URLSearchParams();
+        formData.append('user', user);
+        formData.append('password', password);
 
-      // Realizar la solicitud POST con el formato adecuado
-      const res = await fetch('http://www.fabawsmobile.faba.org.ar/Service1.asmx/IniciarSesion', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: formData.toString(), // Enviar los datos en el formato adecuado
-      });
+        const res = await fetch('https://us-central1-fabapp-b7caa.cloudfunctions.net/iniciarSesion', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: formData.toString(),
+        });
 
-      if (!res.ok) {
-        throw new Error('Network response was not ok');
-      }
+        if (!res.ok) {
+            throw new Error('Network response was not ok');
+        }
 
-      const data = await res.json(); // Recibir la respuesta como JSON
-      console.log('Respuesta del servidor:', data);
+        const data = await res.json();
+        console.log('Respuesta del servidor:', data);
 
-      if (data.response.usuario.valido === 'SI') {
-        // Guardar los datos en AsyncStorage
-        await AsyncStorage.setItem('@session_data', JSON.stringify(data.response));
-
-        // Navegar a la pantalla principal
-        navigation.navigate('Main');
-        setLoginFailed(false);
-      } else {
-        // Mostrar el modal de error
-        openModal('Usuario o contraseña inválidos');
-        setLoginFailed(true);
-      }
+        if (data.response.usuario.valido === 'SI') {
+            // Suponiendo que el token expira en 1 hora
+            const expirationTime = new Date().getTime() + 3600000; // 1 hora en milisegundos
+            const sessionData = {
+                ...data.response,
+                expiration: expirationTime,
+            };
+            await AsyncStorage.setItem('@session_data', JSON.stringify(sessionData));
+            navigation.navigate('Main');
+            setLoginFailed(false);
+        } else {
+            openModal('Usuario o contraseña inválidos');
+            setLoginFailed(true);
+        }
     } catch (error) {
-      console.error('Fetch Error:', error);
-      openModal('Error al comunicarse con el servidor');
-      setLoginFailed(true);
+        console.error('Fetch Error:', error);
+        openModal('Error al comunicarse con el servidor');
+        setLoginFailed(true);
     }
-  };
+};
+
 
   const handleRequestUser = () => {
     const email = "comunicacion@fbpba.org.ar";
@@ -180,14 +181,13 @@ const styles = StyleSheet.create({
     flex: 1,
     resizeMode: 'cover',
     width: windowWidth,
-    height: windowHeight,
   },
   container: {
     flex: 1,
     justifyContent: 'flex-end',
     alignItems: 'center',
-    padding: 25,
-    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    paddingHorizontal: 20,
+    paddingBottom:40,
   },
   logo: {
     width: 225,

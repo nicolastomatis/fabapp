@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, ActivityIndicator, StyleSheet, Dimensions, SafeAreaView, TouchableOpacity, ImageBackground } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator, StyleSheet, Dimensions, SafeAreaView, TouchableOpacity, ImageBackground, ScrollView } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import styles from '../styles/InicioStyles'; // Ruta de acuerdo a tu estructura de carpetas
@@ -11,79 +11,94 @@ const InicioScreen = ({ navigation }) => {
 
   useEffect(() => {
     const fetchMutualesData = async () => {
-      try {
-        const sessionData = await AsyncStorage.getItem('@session_data');
-        if (sessionData) {
-          const parsedData = JSON.parse(sessionData);
+        try {
+            const sessionData = await AsyncStorage.getItem('@session_data');
+            if (sessionData) {
+                const parsedData = JSON.parse(sessionData);
 
-          if (parsedData.token && parsedData.usuario && parsedData.mutuales) {
-            // Limitar a los primeros 8 elementos
-            const topMutuales = parsedData.mutuales.slice(0, 9);
-            setMutuales(topMutuales);
-          } else {
-            setError('Datos de sesión incompletos');
-          }
-        } else {
-          setError('No se encontraron datos de sesión');
+                const currentTime = new Date().getTime();
+                if (parsedData.expiration > currentTime) {
+                    if (parsedData.token && parsedData.usuario && parsedData.mutuales) {
+                        // Limitar a los primeros 8 elementos
+                        const topMutuales = parsedData.mutuales.slice(0, 9);
+                        setMutuales(topMutuales);
+                    } else {
+                        setError('Datos de sesión incompletos');
+                    }
+                } else {
+                    // Token expirado, redirigir al login
+                    navigation.navigate('Login');
+                    setError('La sesión ha expirado, por favor inicie sesión nuevamente.');
+                }
+            } else {
+                setError('No se encontraron datos de sesión');
+            }
+        } catch (error) {
+            console.error('Error al cargar los datos de sesión:', error);
+            setError('Error al recuperar los datos');
+        } finally {
+            setLoading(false);
         }
-      } catch (error) {
-        console.error('Error al cargar los datos de sesión:', error);
-        setError('Error al recuperar los datos');
-      } finally {
-        setLoading(false);
-      }
     };
 
     fetchMutualesData();
-  }, []);
+}, []);
 
-  const handlePress = async (codigomutual) => {
-    console.log("Pressed codigomutual:", codigomutual); // Para verificar que el código se esté pasando correctamente
+const handlePress = async (codigomutual) => {
+  console.log("Pressed codigomutual:", codigomutual);
 
-    if (!codigomutual) {
+  if (!codigomutual) {
       setError('No se ha seleccionado ninguna mutual');
       return;
-    }
+  }
 
-    setLoading(true);
+  setLoading(true);
 
-    try {
+  try {
       const sessionData = await AsyncStorage.getItem('@session_data');
       if (sessionData) {
-        const parsedData = JSON.parse(sessionData);
-        const token = parsedData.token;
-        const user = parsedData.usuario.cod;
+          const parsedData = JSON.parse(sessionData);
 
-        console.log("Token:", token, "User:", user, "Mutual:", codigomutual); // Verifica los valores antes de hacer la solicitud
+          const currentTime = new Date().getTime();
+          if (parsedData.expiration > currentTime) {
+              const token = parsedData.token;
+              const user = parsedData.usuario.cod;
 
-        // Formatear los datos como una cadena de consulta
-        const formData = new URLSearchParams();
-        formData.append('token', token);
-        formData.append('user', user);
-        formData.append('mutual', codigomutual);
+              console.log("Token:", token, "User:", user, "Mutual:", codigomutual);
 
-        const response = await axios.post('http://www.fabawsmobile.faba.org.ar/Service1.asmx/TraerNormaMutual', formData.toString(), {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
+              const formData = new URLSearchParams();
+              formData.append('token', token);
+              formData.append('user', user);
+              formData.append('mutual', codigomutual);
+
+              const firebaseFunctionUrl = 'https://us-central1-fabapp-b7caa.cloudfunctions.net/traerNormaMutual';
+
+              const response = await axios.post(firebaseFunctionUrl, formData.toString(), {
+                  headers: {
+                      'Content-Type': 'application/x-www-form-urlencoded'
+                  }
+              });
+
+              console.log("Response:", response.data);
+
+              const detalles = response.data.response.detallesNorma;
+              navigation.navigate('NormaDetalle', { details: detalles });
+
+          } else {
+              navigation.navigate('Login');
+              setError('La sesión ha expirado, por favor inicie sesión nuevamente.');
           }
-        });
-
-        console.log("Response:", response.data);
-
-        // Ajusta el acceso a los datos según la estructura de la respuesta
-        const detalles = response.data.response.detallesNorma;
-        navigation.navigate('NormaDetalle', { details: detalles });
-
       } else {
-        setError('No se encontraron datos de sesión');
+          setError('No se encontraron datos de sesión');
       }
-    } catch (error) {
+  } catch (error) {
       console.error('Error al solicitar detalles:', error);
       setError('Error al solicitar detalles');
-    } finally {
+  } finally {
       setLoading(false);
-    }
-  };
+  }
+};
+
 
   // Función para truncar el texto
   const truncateText = (text, maxLength) => {
@@ -92,49 +107,51 @@ const InicioScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
+        <View style={styles.container}>
 
-        <TouchableOpacity
-          style={styles.facturacionButton}
-          onPress={() => navigation.navigate('Facturacion')}
-        >
-          <ImageBackground
-            source={require('../assets/images/fondoBoton.jpg')}
-            style={styles.backgroundImage}
+          <TouchableOpacity
+            style={styles.facturacionButton}
+            onPress={() => navigation.navigate('Facturacion')}
           >
-            <Text style={styles.buttonText}>Cierre de{"\n"}facturación</Text>
-          </ImageBackground>
-        </TouchableOpacity>
-
-        <View style={styles.section}>
-          <Text style={styles.subtitleSection}>Normas de{'\n'}Obras Sociales</Text>
-
-          <TouchableOpacity style={[styles.verMasButtonItem]} onPress={() => navigation.navigate('NormasObrasSociales')}>
-            <Text style={styles.textoButtonItem}>ver todas</Text>
+            <ImageBackground
+              source={require('../assets/images/fondoBoton.jpg')}
+              style={styles.backgroundImage}
+            >
+              <Text style={styles.buttonText}>Cierre de{"\n"}facturación</Text>
+            </ImageBackground>
           </TouchableOpacity>
-        </View>
-        <View style={styles.listItems}>
-          <FlatList
-            data={mutuales}
-            keyExtractor={(item) => item.codigomutual.toString()}
-            numColumns={3}
-            contentContainerStyle={styles.list}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={styles.item}
-                onPress={() => handlePress(item.codigomutual)}
-              >
-                <Text style={styles.siglas}>{truncateText(item.sigla, 10)}</Text>
-              </TouchableOpacity>
+
+          <View style={styles.section}>
+            <Text style={styles.subtitleSection}>Normas de{'\n'}Obras Sociales</Text>
+
+            <TouchableOpacity style={[styles.verMasButtonItem]} onPress={() => navigation.navigate('NormasObrasSociales')}>
+              <Text style={styles.textoButtonItem}>ver todas</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <View style={styles.listItems}>
+            {loading ? (
+              <ActivityIndicator size="large" color="#FF893E" />
+            ) : (
+              <FlatList
+                data={mutuales}
+                keyExtractor={(item) => item.codigomutual.toString()}
+                numColumns={3}
+                contentContainerStyle={styles.list}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={styles.item}
+                    onPress={() => handlePress(item.codigomutual)}
+                  >
+                    <Text style={styles.siglas}>{truncateText(item.sigla, 10)}</Text>
+                  </TouchableOpacity>
+                )}
+              />
             )}
-          />
+          </View>
         </View>
-      </View>
     </SafeAreaView>
   );
 };
-
-const { width } = Dimensions.get('window');
-const ITEM_WIDTH = '25%';
 
 export default InicioScreen;

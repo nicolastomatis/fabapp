@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Linking, Image } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Linking, Image, SafeAreaView } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import CustomModal from '../components/CustomModal'; // Asegúrate de ajustar la ruta según tu estructura de archivos
@@ -46,52 +46,58 @@ const NotificacionesScreen = ({ route, navigation }) => {
 
   const obtenerNovedades = async () => {
     try {
-      console.log('Obteniendo novedades...');
-      const sessionData = await AsyncStorage.getItem('@session_data');
+        console.log('Obteniendo novedades...');
+        const sessionData = await AsyncStorage.getItem('@session_data');
 
-      if (sessionData) {
-        const { token, usuario } = JSON.parse(sessionData);
+        if (sessionData) {
+            const { token, usuario } = JSON.parse(sessionData);
 
-        if (!token || !usuario || !usuario.cod) {
-          setModalTitle('Error');
-          setModalMessage('Datos de sesión incompletos');
-          setModalVisible(true);
-          return;
-        }
+            if (!token || !usuario || !usuario.cod) {
+                setModalTitle('Error');
+                setModalMessage('Datos de sesión incompletos');
+                setModalVisible(true);
+                return;
+            }
 
-        const formData = new URLSearchParams();
-        formData.append('token', token);
-        formData.append('user', usuario.cod);
+            // Formatear los datos como una cadena de consulta
+            const formData = new URLSearchParams();
+            formData.append('token', token);
+            formData.append('user', usuario.cod);
 
-        const response = await axios.post('http://www.fabawsmobile.faba.org.ar/Service1.asmx/TraerNovedades', formData.toString(), {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-          }
-        });
+            // Reemplaza el siguiente URL con el endpoint de Firebase Functions
+            const firebaseFunctionUrl = 'https://us-central1-fabapp-b7caa.cloudfunctions.net/traerNovedades';
 
-        console.log('Respuesta del servidor:', response.data);
+            const response = await axios.post(firebaseFunctionUrl, formData.toString(), {
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            });
 
-        const data = response.data;
+            console.log('Respuesta del servidor:', response.data);
 
-        if (data.response && Array.isArray(data.response)) {
-          setNovedades(data.response);
+            const data = response.data;
+
+            // Ajusta el acceso a los datos según la estructura de la respuesta
+            if (data.response && Array.isArray(data.response)) {
+                setNovedades(data.response);
+            } else {
+                setModalTitle('Error');
+                setModalMessage('No se encontraron novedades');
+                setModalVisible(true);
+            }
         } else {
-          setModalTitle('Error');
-          setModalMessage('No se encontraron novedades');
-          setModalVisible(true);
+            setModalTitle('Error');
+            setModalMessage('No se encontraron datos de sesión');
+            setModalVisible(true);
         }
-      } else {
-        setModalTitle('Error');
-        setModalMessage('No se encontraron datos de sesión');
-        setModalVisible(true);
-      }
     } catch (error) {
-      console.error('Error al obtener las novedades:', error);
-      setModalTitle('Error');
-      setModalMessage('Error al obtener las novedades');
-      setModalVisible(true);
+        console.error('Error al obtener las novedades:', error);
+        setModalTitle('Error');
+        setModalMessage('Error al obtener las novedades');
+        setModalVisible(true);
     }
-  };
+};
+
 
   const aplicarFiltros = (novedades, filtros) => {
     console.log('Aplicando filtros:', filtros);
@@ -137,8 +143,8 @@ const NotificacionesScreen = ({ route, navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <FlatList
+    <SafeAreaView style={styles.Safecontainer}>
+      <FlatList  style={styles.container}
         data={filteredNovedades}
         keyExtractor={(item, index) => index.toString()}
         renderItem={({ item }) => (
@@ -168,32 +174,36 @@ const NotificacionesScreen = ({ route, navigation }) => {
         title={modalTitle}
         message={modalMessage}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  Safecontainer: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
   container: {
     flex: 1,
     backgroundColor: '#fff',
     padding: 20,
   },
   notificacion: {
-    padding: 20,
+    padding: 10,
     marginBottom: 10,
-    borderRadius: 10,
+    borderRadius: 5,
   },
   row: {
     flexDirection: 'row',
     justifyContent: 'start',
-    marginBottom: 5,
+    marginBottom: 2,
   },
   nombre: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 5,
+    marginBottom: 0,
     color: 'white',
-    marginRight: 5,
+    marginRight: 15,
   },
   obrasocialContainer: {
     flex: 1,
