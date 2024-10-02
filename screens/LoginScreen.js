@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -29,9 +29,12 @@ const LoginScreen = () => {
   const [modalMessage, setModalMessage] = useState('');
   const [loginFailed, setLoginFailed] = useState(false);
   const navigation = useNavigation();
-  
+
   // Animación de zoom
   const scaleAnim = useRef(new Animated.Value(0.5)).current;
+
+  // Estado de opacidad para el texto superior
+  const textOpacity = useRef(new Animated.Value(1)).current;
 
   const openModal = (message) => {
     setModalMessage(message);
@@ -53,46 +56,44 @@ const LoginScreen = () => {
 
   const handleLogin = async () => {
     try {
-        const formData = new URLSearchParams();
-        formData.append('user', user);
-        formData.append('password', password);
+      const formData = new URLSearchParams();
+      formData.append('user', user);
+      formData.append('password', password);
 
-        const res = await fetch('https://us-central1-fabapp-b7caa.cloudfunctions.net/iniciarSesion', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: formData.toString(),
-        });
+      const res = await fetch('https://us-central1-fabapp-b7caa.cloudfunctions.net/iniciarSesion', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: formData.toString(),
+      });
 
-        if (!res.ok) {
-            throw new Error('Network response was not ok');
-        }
+      if (!res.ok) {
+        throw new Error('Network response was not ok');
+      }
 
-        const data = await res.json();
-        console.log('Respuesta del servidor:', data);
+      const data = await res.json();
+      console.log('Respuesta del servidor:', data);
 
-        if (data.response.usuario.valido === 'SI') {
-            // Suponiendo que el token expira en 1 hora
-            const expirationTime = new Date().getTime() + 3600000; // 1 hora en milisegundos
-            const sessionData = {
-                ...data.response,
-                expiration: expirationTime,
-            };
-            await AsyncStorage.setItem('@session_data', JSON.stringify(sessionData));
-            navigation.navigate('Main');
-            setLoginFailed(false);
-        } else {
-            openModal('Usuario o contraseña inválidos');
-            setLoginFailed(true);
-        }
-    } catch (error) {
-        console.error('Fetch Error:', error);
-        openModal('Error al comunicarse con el servidor');
+      if (data.response.usuario.valido === 'SI') {
+        const expirationTime = new Date().getTime() + 3600000; // 1 hora en milisegundos
+        const sessionData = {
+          ...data.response,
+          expiration: expirationTime,
+        };
+        await AsyncStorage.setItem('@session_data', JSON.stringify(sessionData));
+        navigation.navigate('Main');
+        setLoginFailed(false);
+      } else {
+        openModal('Usuario o contraseña inválidos');
         setLoginFailed(true);
+      }
+    } catch (error) {
+      console.error('Fetch Error:', error);
+      openModal('Error al comunicarse con el servidor');
+      setLoginFailed(true);
     }
-};
-
+  };
 
   const handleRequestUser = () => {
     const email = "comunicacion@fbpba.org.ar";
@@ -114,6 +115,30 @@ const LoginScreen = () => {
     Keyboard.dismiss();
   };
 
+  useEffect(() => {
+    const keyboardWillShowListener = Keyboard.addListener('keyboardWillShow', () => {
+      Animated.timing(textOpacity, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
+    });
+
+    const keyboardWillHideListener = Keyboard.addListener('keyboardWillHide', () => {
+      Animated.timing(textOpacity, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
+    });
+
+    return () => {
+      keyboardWillShowListener.remove();
+      keyboardWillHideListener.remove();
+    };
+  }, []);
+
+
   return (
     <TouchableWithoutFeedback onPress={handleDismissKeyboard}>
       <KeyboardAvoidingView
@@ -121,7 +146,12 @@ const LoginScreen = () => {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <ImageBackground source={require('../assets/images/fondo.jpg')} style={styles.backgroundImage}>
+          {/* Texto en la parte superior */}
+
           <View style={styles.container}>
+            <Animated.View style={[styles.topTextContainer, { opacity: textOpacity }]}>
+              <Text style={styles.topText}>Aplicación desarrollada íntegramente por FABA, con el objetivo de optimizar la gestión administrativa de los laboratorios en sus convenios con mutuales, prepagas y obras sociales. Dirigida a colegas y personal administrativo de los laboratorios que forman parte de la RED FABA.</Text>
+            </Animated.View>
             <Image source={require('../assets/images/logo.png')} style={styles.logo} />
             <TextInput
               style={[styles.input, loginFailed && styles.inputError]}
@@ -187,7 +217,21 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingBottom:40,
+    paddingBottom: 40,
+  },
+  topTextContainer: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    borderRadius: 20,
+    borderColor: '#0073A2',
+    borderWidth: 2,
+    marginBottom: 50,
+  },
+  topText: {
+    fontSize: 18,
+    color: 'grey',
+    padding: 20,
+    textAlign: 'center',
   },
   logo: {
     width: 225,
@@ -227,18 +271,20 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   requestButton: {
-    borderColor: '#0073A2',
     alignItems: 'center',
     marginBottom: 12,
+    padding:5,
+    backgroundColor:'#00A8A2',
+    borderRadius:5,
   },
   requestButtonText: {
-    color: '#00A8A2',
-    fontSize: 16,
+    color: 'white',
+    fontSize: 18,
     fontWeight: 'bold',
   },
   recoverPasswordText: {
-    color: '#00A8A2',
-    fontSize: 16,
+    color: 'white',
+    fontSize: 18,
     fontWeight: 'bold',
   },
   modalOverlay: {
@@ -253,10 +299,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderRadius: 10,
     alignItems: 'center',
-    shadowOffset: {
-      width: 0,
-      height: 0,
-    },
+    shadowOffset: { width: 0, height: 0, },
     shadowOpacity: 0.5,
     shadowRadius: 10,
     elevation: 10,
@@ -267,14 +310,14 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   modalButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingHorizontal: 25,
+    paddingVertical: 15,
     backgroundColor: '#FF893E',
     borderRadius: 10,
   },
   modalButtonText: {
     color: 'white',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
   },
 });

@@ -55,14 +55,14 @@ export default StyleSheet.create({
     },
     modalButton: {
         marginTop: 10,
-        paddingVertical: 10,
-        paddingHorizontal: 20,
+        paddingVertical: 15,
+        paddingHorizontal: 25,
         backgroundColor: '#FF893E',
         borderRadius: 5,
     },
     modalButtonText: {
         color: 'white',
-        fontSize: 16,
+        fontSize: 18,
         fontWeight: 'bold',
     },
 });

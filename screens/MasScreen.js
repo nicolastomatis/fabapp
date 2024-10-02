@@ -86,6 +86,18 @@ export default function MasScreen({ navigation }) {
             </TouchableOpacity>
           </View>
 
+          <View style={styles.section}>
+
+          <Text style={styles.textoDetalle}>Aplicación desarrollada íntegramente por FABA,
+              con el objetivo de optimizar la gestión administrativa de los laboratorios en sus convenios con mutuales,
+              prepagas y obras sociales.
+              Dirigida a colegas y personal administrativo de los laboratorios que forman parte de la RED FABA.</Text>
+
+
+          </View>
+
+          
+
           <TouchableOpacity style={styles.contenedor} onPress={() => navigation.navigate('Login')}>
           <Image source={require('../assets/icons/cerrar.png')}
                 style={styles.icon}
@@ -146,5 +158,11 @@ const styles = StyleSheet.create({
     width: 35,
     height: 35,
     tintColor: 'white',
+  },
+  textoDetalle: {
+    fontSize: 16,
+    color: 'white',
+    textAlign: 'justify',
+    paddingVertical:10,
   },
 });

@@ -1,119 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Linking, SafeAreaView } from 'react-native';
-import Collapsible from 'react-native-collapsible';
-import AntDesign from '@expo/vector-icons/AntDesign';
+import { View, Text, ScrollView, SafeAreaView } from 'react-native';
+import styles from '../styles/normaDetalleStyles';
+import RenderField from '../components/detalleNorma/render';
+import RenderApbField from '../components/detalleNorma/renderAPB';
+import RenderPdfButton from '../components/detalleNorma/renderPDFBoton';
 
 const NormaDetalleScreen = ({ navigation, route }) => {
   const { details } = route.params;
 
-  // Verificación para asegurarse de que 'details' está definido
   if (!details || typeof details !== 'object') {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.Safecontainer}>
         <Text style={styles.errorText}>Error al cargar los detalles. Por favor, inténtelo nuevamente.</Text>
       </SafeAreaView>
     );
   }
 
-  // Función para limpiar etiquetas HTML
-  const stripHtmlTags = (html) => {
-    if (typeof html !== 'string') {
-      console.warn('Valor no es una cadena:', html);
-      return ''; // Si no es una cadena, retorna una cadena vacía
-    }
-
-    const textWithLineBreaks = html.replace(/<br\s*\/?>/gi, '\n');
-    return textWithLineBreaks.replace(/<[^>]*>?/gm, '');
-  };
-
-  const renderField = (
-    label,
-    value,
-    isCollapsible = false,
-    collapsed = true,
-    onToggle = () => {},
-    showLabel = true
-  ) => {
-    if (value === undefined || value === null || (typeof value === 'string' && value.trim() === '')) {
-      return null;
-    }
-  
-    const renderValue = () => {
-      if (typeof value === 'string') {
-        if (value.toUpperCase() === 'SI') {
-          return <AntDesign name="checkcircleo" size={25} color="green" />;
-        } else if (value.toUpperCase() === 'NO') {
-          return <AntDesign name="closecircleo" size={25} color="red" />;
-        }
-      }
-    
-      return Array.isArray(value) ? value.map((item, index) => (
-        <View key={index} style={styles.itemFormatoOrdenes}>
-        <View style={styles.itemFormatoOrdenesTituloYAcepta}>
-          <Text style={styles.itemTitle}>{item.tipo}:</Text>
-          {/* Aquí se aplica la misma lógica para item.acepta */}
-          {typeof item.acepta === 'string' && item.acepta.toUpperCase() === 'SÍ' ? (
-            <AntDesign name="checkcircleo" size={25} color="green" />
-          ) : typeof item.acepta === 'string' && item.acepta.toUpperCase() === 'NO' ? (
-            <AntDesign name="closecircleo" size={25} color="red" />
-          ) : (
-            <Text style={styles.itemText}>{stripHtmlTags(item.acepta)}</Text>
-          )}          
-          
-        </View>   
-        
-        <View style={styles.itemFormatoOrdenesTituloYAcepta}>
-        <Text style={styles.itemText}>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec consectetur rhoncus purus, sed commodo turpis semper id.</Text>
-        </View>
-          
-          </View>
-      )) : (typeof value === 'object')
-        ? JSON.stringify(value)
-        : stripHtmlTags(value);
-    };
-    
-  
-    return (
-      <View style={isCollapsible ? styles.contenedorConLinea : styles.contenedor}>
-        {isCollapsible ? (
-          <>
-            <TouchableOpacity style={styles.desplegable} onPress={onToggle}>
-              {showLabel && <Text style={styles.titulo}>{label}:</Text>}
-              <AntDesign name={collapsed ? "downcircleo" : "upcircleo"} size={25} color="#FF893E" marginTop={10} />
-            </TouchableOpacity>
-            <Collapsible collapsed={collapsed} style={styles.fondo}>
-              {Array.isArray(value) ? renderValue() : <Text style={styles.informacionHTML}>{renderValue()}</Text>}
-            </Collapsible>
-          </>
-        ) : (
-          <>
-            {showLabel && <Text style={styles.titulo}>{label}:</Text>}
-            {Array.isArray(value) ? renderValue() : <Text style={styles.informacion}>{renderValue()}</Text>}
-          </>
-        )}
-      </View>
-    );
-  };
-
-  const renderPdfButton = (pdfPartialUrl) => {
-    if (pdfPartialUrl && pdfPartialUrl.trim()) {
-      const filePath = pdfPartialUrl.replace('\\FABAWEBCL1', '');
-      const fullUrl = `http://faba.org.ar${filePath.replace(/\\/g, '/')}`;
-
-      return (
-        <TouchableOpacity style={styles.floatingButton} onPress={() => Linking.openURL(fullUrl)}>
-          <Text style={styles.buttonText}>Abrir PDF</Text>
-        </TouchableOpacity>
-      );
-    } else {
-      return <Text style={styles.floatingButton}>No hay PDF disponible</Text>;
-    }
-  };
-
   const [collapsedSections, setCollapsedSections] = useState({
+    textoapb: true,
     apb: true,
     tipoOrden: true,
     planes: true,
+    plazoValidez: true,
   });
 
   const toggleSection = (section) => {
@@ -122,6 +30,18 @@ const NormaDetalleScreen = ({ navigation, route }) => {
       [section]: !prevState[section],
     }));
   };
+
+  const isValueValid = (value) => value !== undefined && value !== null && value !== 0 && (typeof value !== 'string' || value.trim());
+
+  const stripHtmlTags = (html) => {
+    if (typeof html !== 'string') {
+        console.warn('Valor no es una cadena:', html);
+        return '';
+    }
+    const textWithLineBreaks = html.replace(/<br\s*\/?>/gi, '\n');
+    return textWithLineBreaks.replace(/<[^>]*>?/gm, '');
+};
+
 
   useEffect(() => {
     if (details?.sigla) {
@@ -132,150 +52,36 @@ const NormaDetalleScreen = ({ navigation, route }) => {
   return (
     <SafeAreaView style={styles.Safecontainer}>
       <ScrollView style={styles.container}>
-        {renderField('', details.nombre, false, true, () => {}, false)}
+        <RenderField label='' value={details.nombre} showLabel={false} />
         
         <View style={styles.contenedorConLinea}>
           <Text style={styles.descripcion}>Documentación que debe presentar el afiliado para su atención en el laboratorio</Text>
         </View>
 
-        {renderField('Código', details.codigomutual)}
-        {renderField('Fecha de act.', details.fechaactualizacion)}
-        {renderField('Credencial Digital', details.credencialdigital)}
-        {renderField('Credencial Plástica', details.credencialplastica)}
-        {renderField('DNI', details.dni)}
+        {isValueValid(details.codigomutual) && <RenderField label='Código' value={details.codigomutual} />}
+        {isValueValid(details.fechaversion) && <RenderField label={'Fecha de versión \nde la norma'} value={details.fechaversion} />}
+        {isValueValid(details.credencialdigital) && <RenderField label='Credencial Digital' value={details.credencialdigital} />}
+        {isValueValid(details.credencialplastica) && <RenderField label='Credencial Plástica' value={details.credencialplastica} />}
+        {isValueValid(details.dni) && <RenderField label='DNI' value={details.dni} />}
 
-        {renderField('Formato de orden', details.tipoOrden, true, collapsedSections.tipoOrden, () => toggleSection('tipoOrden'))}
-
-        {renderField('APB', details.apb, true, collapsedSections.apb, () => toggleSection('apb'))}
-
-        {renderField('Copago', details.copago)}
-
-        {renderField('Planes', details.planes, true, collapsedSections.planes, () => toggleSection('planes'))}
-
-        {renderField('AOL', details.aol)}
-
-        {renderField('Fecha de pub.', details.fechapublicacion)}
-
-        {renderPdfButton(details.pdf)}
+        {isValueValid(details.tipoOrden) && <RenderField label='Formato de orden' value={details.tipoOrden} isCollapsible={true} collapsed={collapsedSections.tipoOrden} onToggle={() => toggleSection('tipoOrden')} />}
+        
+        {isValueValid(details.validezdesde) && <RenderField label='Plazo de validez de orden' value={{ elPlazoDeValidez: { validoDias: details.validezdias, validezDesde: details.validezdesde } }} isCollapsible={true} collapsed={collapsedSections.plazoValidez} onToggle={() => toggleSection('plazoValidez')} showLabel={true} />}
+        
+        {isValueValid(details.copago) && <RenderField label='Copago' value={details.copago} />}
+        
+        {isValueValid(details.apb) && <RenderApbField value={details.apb} description={stripHtmlTags(details.textoapb)} practicaapb={details.practicaapb} pagaporfaba={details.pagaporfaba} valoracreditadosapb={details.valoracreditadosapb} tipoapb={details.tipoapb} />}
+        
+        {isValueValid(details.planes) && <RenderField label='Planes' value={stripHtmlTags(details.planes)} isCollapsible={true} collapsed={collapsedSections.planes} onToggle={() => toggleSection('planes')} />}
+        
+        {isValueValid(details.aol) && <RenderField label='AOL' value={details.aol} />}
+        
+        {isValueValid(details.fechapublicacion) && <RenderField label={'Fecha de \npublicación'} value={details.fechapublicacion} />}
+        
+        <RenderPdfButton pdfPartialUrl={details.pdf} />
       </ScrollView>
     </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  Safecontainer: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    padding:20,
-  },
-  contenedor: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems:'center',
-    paddingBottom: 10,
-    marginBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#D9D9D9',
-  },
-  desplegable: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingBottom: 10,
-    marginBottom: 10,
-  },
-  contenedorConLinea: {
-    paddingBottom: 10,
-    marginBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#D9D9D9',
-  },
-  titulo: {
-    fontWeight: 'bold',
-    fontSize: 20,
-    color: 'grey',
-    paddingVertical: 10,
-  },
-  informacion: {
-    fontWeight: 'bold',
-    fontSize: 18,
-    color: '#FF893E',
-    paddingVertical: 10,
-  },
-  informacionHTML: {
-    fontSize: 18,
-    color: 'grey',
-    paddingVertical: 10,
-    textAlign: 'justify',
-    marginBottom: 10,
-  },
-  floatingButton: {
-    width: 'auto',
-    marginTop: 20,
-    marginBottom: 40,
-    padding: 20,
-    borderRadius: 20,
-    backgroundColor: '#00A8A2',
-    justifyContent: 'center',
-  },
-  buttonText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  itemContainer: {
-    marginBottom: 0,
-    flexDirection: 'column',
-  },
-  itemFormatoOrdenes: {
-    flexDirection: 'column',
-    justifyContent: 'space-between',
-    marginBottom:20,
-  },
-  itemFormatoOrdenesTituloYAcepta: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginLeft:0,
-  },
-  itemTitle: {
-    fontWeight: 'bold',
-    fontSize: 16,
-    color: 'grey',
-    marginBottom:10,
-  },
-  itemText: {
-    fontSize: 16,
-    color: 'grey',
-    marginBottom:10,
-  },
-  icon: {
-    width: 25,
-    height: 25,
-  },
-  descripcion: {
-    padding: 20,
-    borderRadius: 20,
-    borderWidth: 2,
-    borderColor: '#0671B8',
-    fontWeight: 'bold',
-    fontSize: 16,
-    color: '#0671B8',
-    textAlign: 'center',
-  },
-  errorText: {
-    fontSize: 18,
-    color: 'red',
-    textAlign: 'center',
-    margin: 20,
-    padding:20,
-    borderRadius: 20,
-    borderWidth: 2,
-    borderColor: '#0671B8',
-  },
-});
 
 export default NormaDetalleScreen;
