@@ -73,7 +73,6 @@ const LoginScreen = () => {
       }
 
       const data = await res.json();
-      console.log('Respuesta del servidor:', data);
 
       if (data.response.usuario.valido === 'SI') {
         const expirationTime = new Date().getTime() + 3600000; // 1 hora en milisegundos
@@ -93,22 +92,6 @@ const LoginScreen = () => {
       openModal('Error al comunicarse con el servidor');
       setLoginFailed(true);
     }
-  };
-
-  const handleRequestUser = () => {
-    const email = "comunicacion@fbpba.org.ar";
-    const subject = "Solicitud de Usuario";
-    const body = "Hola, soy Bioquímico Federado perteneciente al distrito ... y solicito un usuario para poder ingresar a la aplicación.";
-    const mailtoUrl = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    Linking.openURL(mailtoUrl);
-  };
-
-  const handleRecoverPassword = () => {
-    const email = "comunicacion@fbpba.org.ar";
-    const subject = "Recuperación de Contraseña";
-    const body = "Hola, soy Bioquímico Federado perteneciente al distrito ... y no recuerdo mi contraseña y necesito restablecerla.";
-    const mailtoUrl = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    Linking.openURL(mailtoUrl);
   };
 
   const handleDismissKeyboard = () => {
@@ -175,15 +158,7 @@ const LoginScreen = () => {
             <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
               <Text style={styles.loginButtonText}>Iniciar Sesión</Text>
             </TouchableOpacity>
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity style={styles.requestButton} onPress={handleRecoverPassword}>
-                <Text style={styles.recoverPasswordText}>Solicitar Contraseña</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.requestButton} onPress={handleRequestUser}>
-                <Text style={styles.requestButtonText}>Solicitar Usuario</Text>
-              </TouchableOpacity>
-            </View>
-            {/* Modal */}
+            
             <Modal
               visible={showModal}
               transparent={true}

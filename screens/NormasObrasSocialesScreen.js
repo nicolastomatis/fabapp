@@ -20,7 +20,6 @@ const NormasObrasSocialesScreen = ({ navigation }) => {
 
           if (parsedData.token && parsedData.usuario && parsedData.mutuales) {
             const mutuales = parsedData.mutuales;
-            console.log('Mutuales:', mutuales); // Verifica los datos
             setMutuales(mutuales);
             setFilteredMutuales(mutuales); // Inicialmente, muestra todos los datos
           } else {
@@ -67,8 +66,6 @@ const NormasObrasSocialesScreen = ({ navigation }) => {
             const token = parsedData.token;
             const user = parsedData.usuario.cod;
 
-            console.log("Token:", token, "User:", user, "Mutual:", codigomutual);
-
             // Formatear los datos como una cadena de consulta
             const formData = new URLSearchParams();
             formData.append('token', token);
@@ -84,10 +81,7 @@ const NormasObrasSocialesScreen = ({ navigation }) => {
                 }
             });
 
-            console.log("Response:", response.data);
-
             const detalles = response.data.response.detallesNorma;
-            console.log("Detalles recibidos:", detalles);
 
             navigation.navigate('NormaDetalle', { details: detalles });
 

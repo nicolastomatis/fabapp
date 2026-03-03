@@ -45,7 +45,6 @@ const InicioScreen = ({ navigation }) => {
 }, []);
 
 const handlePress = async (codigomutual) => {
-  console.log("Pressed codigomutual:", codigomutual);
 
   if (!codigomutual) {
       setError('No se ha seleccionado ninguna mutual');
@@ -64,8 +63,6 @@ const handlePress = async (codigomutual) => {
               const token = parsedData.token;
               const user = parsedData.usuario.cod;
 
-              console.log("Token:", token, "User:", user, "Mutual:", codigomutual);
-
               const formData = new URLSearchParams();
               formData.append('token', token);
               formData.append('user', user);
@@ -78,8 +75,6 @@ const handlePress = async (codigomutual) => {
                       'Content-Type': 'application/x-www-form-urlencoded'
                   }
               });
-
-              console.log("Response:", response.data);
 
               const detalles = response.data.response.detallesNorma;
               navigation.navigate('NormaDetalle', { details: detalles });

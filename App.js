@@ -16,6 +16,8 @@ import FacturacionScreen from './screens/FacturacionScreen';
 import NormasObrasSocialesScreen from './screens/NormasObrasSocialesScreen';
 import NormaDetalleScreen from './screens/NormaDetalleScreen';
 import ConfiguracionNotificacionesScreen from './screens/ConfiguracionNotificacionesScreen';
+import InfoScreen from './screens/InfoScreen';
+import DoctorFABA from './screens/DoctorFABA';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -24,6 +26,7 @@ const Tab = createBottomTabNavigator();
 import homeIcon from './assets/icons/home.png';
 import notificationIcon from './assets/icons/notificaciones.png';
 import questionIcon from './assets/icons/ayuda.png';
+import DoctorIcon from './assets/icons/doctorFABA.png';
 import moreIcon from './assets/icons/mas.png';
 
 function BackButton() {
@@ -49,6 +52,8 @@ function MainTabs() {
             imageSource = notificationIcon;
           } else if (route.name === 'Ayuda') {
             imageSource = questionIcon;
+          } else if (route.name === 'Dr. FABA') {
+            imageSource = DoctorIcon;
           } else if (route.name === 'Más') {
             imageSource = moreIcon;
           }
@@ -63,7 +68,7 @@ function MainTabs() {
           );
         },
         tabBarLabel: ({ color }) => (
-          <Text style={{ color, fontSize: 14, marginBottom: 10}}>
+          <Text style={{ color, fontSize: 12, marginBottom: 10}}>
             {route.name}
           </Text>
         ),
@@ -95,6 +100,7 @@ function MainTabs() {
     >
       <Tab.Screen name="Inicio" component={InicioScreen} />
       <Tab.Screen name="Notificaciones" component={NotificacionesScreen} />
+      <Tab.Screen name="Dr. FABA" component={DoctorFABA} />
       <Tab.Screen name="Ayuda" component={AyudaScreen} />
       <Tab.Screen
         name="Más"
@@ -154,6 +160,7 @@ export default function App() {
         <Stack.Screen name="NormasObrasSociales" component={NormasObrasSocialesScreen} options={{ title: 'Normas de Obras Sociales' }} />
         <Stack.Screen name="NormaDetalle" component={NormaDetalleScreen} options={{ title: 'Detalle de Norma' }} />
         <Stack.Screen name="ConfiguracionNotificacionesScreen" component={ConfiguracionNotificacionesScreen} options={{ title: 'Editar notificaciones' }} />
+        <Stack.Screen name="InfoScreen" component={InfoScreen} options={{ title: 'Más información' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

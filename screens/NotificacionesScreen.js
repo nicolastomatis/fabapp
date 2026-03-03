@@ -46,7 +46,6 @@ const NotificacionesScreen = ({ route, navigation }) => {
 
   const obtenerNovedades = async () => {
     try {
-        console.log('Obteniendo novedades...');
         const sessionData = await AsyncStorage.getItem('@session_data');
 
         if (sessionData) {
@@ -73,8 +72,6 @@ const NotificacionesScreen = ({ route, navigation }) => {
                 }
             });
 
-            console.log('Respuesta del servidor:', response.data);
-
             const data = response.data;
 
             // Ajusta el acceso a los datos según la estructura de la respuesta
@@ -100,7 +97,6 @@ const NotificacionesScreen = ({ route, navigation }) => {
 
 
   const aplicarFiltros = (novedades, filtros) => {
-    console.log('Aplicando filtros:', filtros);
     const novedadesFiltradas = novedades.filter(novedad => {
       if (novedad.tiponovedad === 'COM - Comunicaciones' && !filtros.comunicaciones) return false;
       if (novedad.tiponovedad === 'NOV - Novedades' && !filtros.novedades) return false;
@@ -117,7 +113,6 @@ const NotificacionesScreen = ({ route, navigation }) => {
   }, []);
 
   useEffect(() => {
-    console.log('Aplicando filtros a novedades...');
     aplicarFiltros(novedades, filters);
   }, [filters, novedades]);
 

@@ -3,11 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native
 import moment from 'moment';
 import holidays from '../feriados/feriados.json'; // Asegúrate de que la ruta sea correcta
 
-moment.defineLocale('es', {
-  week: {
-    dow: 1, // El primer día de la semana es domingo
-  },
-});
+
 
 // Configuración de los nombres de los días de la semana
 const dayNames = ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá', 'Do'];

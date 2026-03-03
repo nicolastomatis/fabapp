@@ -1,32 +1,38 @@
 {
   "expo": {
-    "name": "fabapp",
+    "name": "FABA app",
     "slug": "fabapp",
-    "version": "2.0.1",
+    "version": "2.0.4",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#fff",
-      "android": {
-        "versionCode": 2
-      }
+      "backgroundColor": "#ffffff"
     },
+    "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.nicolastomatis.fabapp",
+      "buildNumber": "2.0.6",
+      "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true
+        }
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#fff"
+        "backgroundColor": "#ffffff"
       },
       "package": "com.nicolastomatis.fabapp",
       "permissions": [
         "INTERNET",
         "ACCESS_NETWORK_STATE"
-      ]
+      ],
+      "versionCode": 6
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -35,6 +41,14 @@
       "eas": {
         "projectId": "8b4fe3b2-f66f-4ff4-b89e-dd2786ab2135"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/8b4fe3b2-f66f-4ff4-b89e-dd2786ab2135",
+      "fallbackToCacheTimeout": 0
+
     }
   }
 }

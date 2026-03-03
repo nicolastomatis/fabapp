@@ -13,9 +13,6 @@ const baseUrl = 'http://www.fabawsmobile.faba.org.ar/Service1.asmx';
 app.post('/IniciarSesion', async (req, res) => {
     const { user, password } = req.body;
 
-    console.log('Iniciando solicitud al servicio SOAP...');
-    console.log('Datos de usuario:', { user, password });
-
     try {
         // Enviamos la solicitud POST al servicio SOAP
         const response = await axios.post(`${baseUrl}/IniciarSesion`, `user=${encodeURIComponent(user)}&password=${encodeURIComponent(password)}`, {
@@ -23,8 +20,6 @@ app.post('/IniciarSesion', async (req, res) => {
                 'Content-Type': 'application/x-www-form-urlencoded'
             }
         });
-
-        console.log('Respuesta cruda del servicio SOAP:', response.data);
 
         res.send(response.data);
     } catch (error) {
@@ -36,9 +31,6 @@ app.post('/IniciarSesion', async (req, res) => {
 app.post('/TraerNormaMutual', async (req, res) => {
     const { token, user, mutual } = req.body;
 
-    console.log('Enviando solicitud al servicio SOAP...');
-    console.log('Datos:', { token, user, mutual });
-
     try {
         // Enviamos la solicitud POST al servicio SOAP
         const response = await axios.post(`${baseUrl}/TraerNormaMutual`, `token=${encodeURIComponent(token)}&user=${encodeURIComponent(user)}&mutual=${encodeURIComponent(mutual)}`, {
@@ -46,8 +38,6 @@ app.post('/TraerNormaMutual', async (req, res) => {
                 'Content-Type': 'application/x-www-form-urlencoded'
             }
         });
-
-        console.log('Respuesta cruda del servicio SOAP:', response.data);
 
         res.send(response.data);
     } catch (error) {
@@ -59,9 +49,6 @@ app.post('/TraerNormaMutual', async (req, res) => {
 app.post('/TraerNovedades', async (req, res) => {
     const { token, user } = req.body;
 
-    console.log('Enviando solicitud al servicio SOAP para TraerNovedades...');
-    console.log('Datos:', { token, user });
-
     try {
         // Enviamos la solicitud POST al servicio SOAP
         const response = await axios.post(`${baseUrl}/TraerNovedades`, `token=${encodeURIComponent(token)}&user=${encodeURIComponent(user)}`, {
@@ -69,8 +56,6 @@ app.post('/TraerNovedades', async (req, res) => {
                 'Content-Type': 'application/x-www-form-urlencoded'
             }
         });
-
-        console.log('Respuesta cruda del servicio SOAP:', response.data);
 
         // Envía la respuesta de vuelta al cliente
         res.send(response.data);
@@ -81,5 +66,4 @@ app.post('/TraerNovedades', async (req, res) => {
 });
 
 app.listen(port, () => {
-    console.log(`Servidor API REST escuchando en http://localhost:${port}`);
 });

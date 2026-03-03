@@ -37,11 +37,11 @@ export default function MasScreen({ navigation }) {
               <Text style={styles.texto}>Ayuda</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.contenedor} onPress={() => navigation.navigate('Perfil')}>
+            <TouchableOpacity style={styles.contenedor} onPress={() => navigation.navigate('Dr. FABA')}>
             <Image source={require('../assets/icons/user.png')}
                 style={styles.icon}
               />
-              <Text style={styles.texto}>Mi perfil</Text>
+              <Text style={styles.texto}>Doctor FABA</Text>
             </TouchableOpacity>
           </View>
 
